@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ prob.probno }} - MathProbs{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="/static/sidebar.css">
+<link rel="stylesheet" type="text/css" href="/static/blocks.css">
+{% endblock %}
+
+{% block navbar_title %}{{ prob.probno }} {{ prob.probtitle }}{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    {% set problabels = jsonloads(prob.problabels) %}
+    {% if problabels %}
+    <h3 class="sidebar-title">题目标签</h3>
+    {% for label in problabels %}
+    <div class="sidebar-item">{{ label }}</div>
+    {% endfor %}{% endif %}
+    {% set source = find_user(prob.source) %}
+    {% if source %}
+    <h3 class="sidebar-title">来源</h3>
+    <div class="sidebar-item">{{ source.name }}</div>
+    {% endif %}
+</div>
+<div id="bodydiv" class="bodypart">
+    <textarea id="bodytext" class="bodytext" readonly>
+        {{ prob.statement }}
+    </textarea>
+</div>
+<div id="submitdiv" class="submitpart">
+    <h3>提交答案</h3>
+    <form id="answerform" method="POST"
+        action="/probs/{{ prob.probno }}/submit">
+        <textarea name="submittext" class="submittext"
+            placeholder="按照要求提交答案" rows="10"></textarea>
+        <button class="submitbutton" type="submit">提交</button>
+    </form>
+</div>
+<script type="text/javascript" src="/static/md-render.js"></script>
+{% endblock %}

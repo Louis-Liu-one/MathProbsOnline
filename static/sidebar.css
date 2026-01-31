@@ -1,0 +1,40 @@
+
+div.sidebar {
+    position: fixed;
+    top: 80px;
+    left: 0px;
+    background-color: rgb(92, 203, 226);
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-left: 0px;
+    width: 16%;
+    height: 100%;
+}
+
+div.sidebar-item {
+    text-align: right;
+    line-height: 35px;
+    color: white;
+    margin-top: 7px;
+    padding-right: 10px;
+    cursor: pointer;
+    background-color: rgba(0, 0, 127, .1);
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    transition-duration: 500ms;
+}
+
+div.sidebar-item:hover {
+    transition-duration: 500ms;
+    background-color: rgba(0, 0, 191, .2);
+}
+
+a.sidebar-link {
+    text-decoration: none;
+    font-family: Arial;
+}
+
+h3.sidebar-title {
+    color: aliceblue;
+    text-align: right;
+}

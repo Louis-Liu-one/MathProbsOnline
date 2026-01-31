@@ -1,0 +1,49 @@
+
+div.mainpart, div.bodypart, div.submitpart {
+    position: fixed;
+    top: 80px;
+    bottom: 15px;
+    margin-top: 15px;
+    margin-left: 20px;
+    padding-left: 10px;
+    padding-right: 10px;
+    overflow-y: auto;
+    border-color: rgb(92, 206, 239);
+    border-width: 3px;
+    border-style: solid;
+    border-radius: 4px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 127, .3);
+}
+
+div.mainpart {
+    left: 16%;
+    width: 79%;
+}
+
+div.bodypart {
+    left: 16%;
+    width: 45%;
+    img {
+        width: 100%;
+    }
+}
+
+div.submitpart {
+    left: 64%;
+    width: 31%;
+}
+
+textarea.bodytext, h1 {
+    display: none;
+}
+
+textarea.submittext {
+    width: 98%;
+    max-width: 98%;
+    min-width: 98%;
+    overflow-y: auto;
+}
+
+button.submitbutton {
+    float: right;
+}

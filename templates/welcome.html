@@ -1,0 +1,41 @@
+<!--<!DOCTYPE html>
+<html>
+<head>
+    <title>欢迎</title>
+</head>
+<body>
+    <h1>欢迎回来，{{ username }}！</h1>
+    <p>您已成功登录系统。</p>
+</body>
+</html>!-->
+{% extends "base.html" %}
+
+{% block title %}欢迎{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="/static/sidebar.css">
+<link rel="stylesheet" type="text/css" href="/static/blocks.css">
+{% endblock %}
+
+{% block navbar_title %}我的主页{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    <h3 class="sidebar-title">欢迎来到MathProbsOnline</h3>
+    <a class="sidebar-link" href="/edit-profile">
+        <div class="sidebar-item">修改简介</div>
+    </a>
+</div>
+<div class="mainpart">
+    <h3>我通过的题目</h3>
+    {% set passedprobs = jsonloads(current_user.passedprobs) %}
+    {% if passedprobs %}
+        <table>
+            {% for prob in passedprobs %}
+                <tr><td>{{ prob }}</td></tr>
+            {% endfor %}
+        </table>
+    {% else %}<p>暂无</p>{% endif %}
+    <h3>我贡献的题目</h3>
+</div>
+{% endblock %}

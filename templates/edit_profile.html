@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>修改用户简介</title>
+</head>
+<body>
+    <h2>修改简介</h2>
+    <form method="post" action="/edit-profile" enctype="multipart/form-data">
+        <div>
+            <label for="username">用户名：</label><br>
+            <input type="text" id="username" name="username">
+        </div>
+        <div>
+            <label for="password">密码：</label><br>
+            <input type="password" id="password" name="password">
+        </div>
+        <div>
+            <label for="password">头像：</label><br>
+            <input type="file" id="avatar" name="avatar"
+                formenctype="multipart/form-data"
+                accept="image/vnd.microsoft.icon">
+        </div>
+        <div>
+            <button type="submit">修改</button>
+        </div>
+    </form>
+</body>
+</html>

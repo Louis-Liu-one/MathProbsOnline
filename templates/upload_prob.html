@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>上传题目</title>
+</head>
+<body>
+    <h2>上传题目</h2>
+    <form method="post" action="/upload-prob" enctype="multipart/form-data">
+        <div>
+            <label for="probno">题目编号：</label><br>
+            <input type="text" id="probno" name="probno" required>
+        </div>
+        <div>
+            <label for="probtitle">题目名称：</label><br>
+            <input type="text" id="probtitle" name="probtitle">
+        </div>
+        <div>
+            <label for="problabels">题目标签：</label><br>
+            <input type="text" id="problabels" name="problabels"
+                placeholder="输入题目标签，以逗号隔开">
+        </div>
+        <div>
+            <label for="statement">题目描述：</label><br>
+            <textarea id="statement" name="statement"
+                placeholder="以Markdown格式输入题面" required></textarea>
+        </div>
+        <div>
+            <label for="answer">答案：</label><br>
+            <input type="text" id="answer" name="answer"
+                placeholder="输入答案，多个答案以逗号隔开，无答案题此项置空">
+        </div>
+        <div>
+            <label for="imgfiles">图片：</label><br>
+            <input type="file" id="imgfiles" name="imgfiles"
+                formenctype="multipart/form-data" multiple>
+        </div>
+        <div>
+            <button type="submit">上传</button>
+        </div>
+    </form>
+</body>
+</html>

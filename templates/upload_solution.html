@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>上传题解</title>
+</head>
+<body>
+    <h2>上传问题{{ probno }}的题解</h2>
+    <form method="post" action="/probs/{{ probno }}/upload-solution"
+        enctype="multipart/form-data">
+        <div>
+            <label for="soltitle">题解标题：</label><br>
+            <input type="text" id="soltitle" name="soltitle">
+        </div>
+        <div>
+            <label for="solution">题解内容：</label><br>
+            <textarea id="solution" name="solution"
+                placeholder="以Markdown格式输入题解" required></textarea>
+        </div>
+        <div>
+            <label for="imgfiles">图片：</label><br>
+            <input type="file" id="imgfiles" name="imgfiles"
+                formenctype="multipart/form-data" multiple>
+        </div>
+        <div>
+            <button type="submit">上传</button>
+        </div>
+    </form>
+</body>
+</html>
