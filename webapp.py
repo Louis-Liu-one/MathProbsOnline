@@ -10,6 +10,7 @@ Copyright (c) 2026 Louis Liu  All rights reserved.
 /users/<uid>  查看他人主页
 
 题目：
+/probs                          题集
 /probs/<probno>                 题目<probno>
 /probs/<probno>/submit          提交题目<probno>的答案
 /probs/<probno>/solutions       查看题解
@@ -17,19 +18,23 @@ Copyright (c) 2026 Louis Liu  All rights reserved.
 /probs/<probno>/upload-solution 上传题解
 /tags/<tag>                     题目标签
 
-计划在Railway部署。
+计划部署至：MathProbsOnline.PythonAnyWhere.com
 '''
 
 import csv
 import json
 import random
 import mimetypes
+
 from flask import Flask, Response, request, url_for
 from flask import render_template, redirect, send_file
 from flask_login import LoginManager, UserMixin, current_user
 from flask_login import login_required, login_user, logout_user
 from flask_sqlalchemy import SQLAlchemy
+
+from sqlalchemy import and_
 from werkzeug.security import generate_password_hash, check_password_hash
+
 from fpevaluator import fpeval
 
 
@@ -79,8 +84,12 @@ def add_to_json_column(user, key, value):
         updated = json.loads(getattr(user, key))
         if str(value) not in updated:
             updated.append(str(value))
-        setattr(user, key, json.dumps(updated))
+        setattr(user, key, json.dumps(updated, ensure_ascii=False))
         db.session.commit()
+
+
+def csv2list(csvstr):
+    return next(csv.reader((csvstr,), skipinitialspace=True))
 
 
 @login_manager.user_loader
@@ -136,7 +145,7 @@ class Prob(db.Model):
         if find_user(uid) and isinstance(solution, str):
             updated = json.loads(self.solutions)
             updated.append((uid, solution))
-            self.solutions = json.dumps(updated)
+            self.solutions = json.dumps(updated, ensure_ascii=False)
             db.session.commit()
 
 
@@ -158,6 +167,15 @@ def get_prob(probno):
         return db.session.get(Prob, probno)
 
 
+def search_probs(requirements):
+    if not requirements:
+        return db.session.query(Prob)
+    return Prob.query.filter(and_(and_(getattr(Prob, key).like(
+                f'%{val}%' if requirement[1] else val)
+            for val in requirement[0])
+        for key, requirement in requirements.items()))
+
+
 def add_prob(**kwargs):
     prob = Prob(**kwargs)
     db.session.add(prob)
@@ -168,7 +186,7 @@ def add_solution(probno, soltitle, solution):
     prob = get_prob(probno)
     updated = json.loads(prob.solutions)
     updated.append((current_user.uid, soltitle, solution))
-    prob.solutions = json.dumps(updated)
+    prob.solutions = json.dumps(updated, ensure_ascii=False)
     db.session.commit()
 
 
@@ -187,10 +205,37 @@ def add_images(probno, imgfiles):
 # =========================== 题目各项网页 ===========================
 
 
+@app.route('/probs', methods=['GET', 'POST'])
+def problist():
+    requirements, form = {}, {}
+    if request.method == 'POST':
+        for key in (
+                'probno', 'probtitle', 'statement', 'problabels', 'source'):
+            form[key] = request.form.get(key)
+        if form['probno']:
+            requirements['probno'] = [form['probno']], False
+        if form['probtitle']:
+            requirements['probtitle'] = [form['probtitle']], True
+        if form['statement']:
+            requirements['statement'] = [form['statement']], True
+        if form['problabels']:
+            requirements['problabels'] = csv2list(form['problabels']), True
+        if form['source']:
+            sourceuid = []
+            for name in csv2list(form['source']):
+                user = find_user(name, 'name')
+                if user:
+                    sourceuid.append(user.uid)
+            if sourceuid:
+                requirements['source'] = sourceuid, False
+    return render_template(
+        'problist.html', probs=search_probs(requirements),
+        query=bool(requirements), form=form)
+
+
 @app.route('/probs/<probno>')
 def probs(probno):
-    prob = get_prob(probno)
-    return render_template('prob.html', prob=prob)
+    return render_template('prob.html', prob=get_prob(probno))
 
 
 @app.route('/probs/<probno>/<image>')
@@ -231,7 +276,7 @@ def upload_prob():
         imgfiles = request.files.getlist('imgfiles')
         add_prob(
             probno=probno, probtitle=probtitle,
-            problabels=json.dumps(next(csv.reader((problabels,)))),
+            problabels=json.dumps(csv2list(problabels), ensure_ascii=False),
             statement='\n' + statement, answer=answer,
             source=current_user.uid)
         add_images(probno, imgfiles)
@@ -331,9 +376,11 @@ def unregister():
     return redirect(url_for('home'))
 
 
+app.add_template_global(json.loads, 'jsonloads')
+app.add_template_global(find_user, 'find_user')
+app.add_template_global(get_prob, 'get_prob')
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.add_template_global(json.loads, 'jsonloads')
-    app.add_template_global(find_user, 'find_user')
     app.run(debug=True)

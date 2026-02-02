@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}题集{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="/static/sidebar.css">
+<link rel="stylesheet" type="text/css" href="/static/blocks.css">
+<link rel="stylesheet" type="text/css" href="/static/problist.css">
+{% endblock %}
+
+{% block navbar_title %}题集{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    <h3 class="sidebar-title">MathProbs题集</h3>
+</div>
+<div class="mainpart">
+    <h3>查询题目</h3>
+    <form class="probquery" method="post" action="{{ url_for('problist') }}">
+        <span><label for="probno">编号：</label>
+        <input type="text" id="probno" name="probno" autocomplete="off"
+            value="{{ form.get('probno', '') }}"></span>
+        <span><label for="probtitle">名称：</label>
+        <input type="text" id="probtitle" name="probtitle" autocomplete="off"
+            value="{{ form.get('probtitle', '') }}"></span>
+        <span><label for="statement">内容：</label>
+        <input type="text" id="statement" name="statement" autocomplete="off"
+            value="{{ form.get('statement', '') }}"></span>
+        <span><label for="problabels">标签：</label>
+        <input type="text" id="problabels" name="problabels" autocomplete="off"
+            placeholder="输入标签，用半角逗号隔开"
+            value="{{ form.get('problabels', '') }}"></span>
+        <span><label for="source">来源：</label>
+        <input type="text" id="source" name="source" autocomplete="off"
+            placeholder="输入用户名称，用半角逗号隔开"
+            value="{{ form.get('source', '') }}"></span>
+        <button type="submit">查询</button>
+    </form>
+    <h3>{% if query %}满足条件的{% else %}所有{% endif %}题目</h3>
+    {% if probs.first() %}
+        <table class="problist">
+            <tr class="probhead">
+                <th>编号</th><th>名称</th><th>标签</th><th>来源</th>
+            </tr>
+            {% for prob in probs %}
+                <tr onclick="location.href
+                        = '{{ url_for('probs', probno=prob.probno) }}'">
+                    <td class="probno">{{ prob.probno }}</td>
+                    <td class="probtitle">{{ prob.probtitle }}</td>
+                    <td class="problabels">
+                        {% for problabel in jsonloads(prob.problabels) %}
+                            <div class="problabel">{{ problabel }}</div>
+                        {% endfor %}
+                    </td>
+                    <td class="source">{{ find_user(prob.source).name }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}<p>暂无</p>{% endif %}
+</div>
+{% endblock %}

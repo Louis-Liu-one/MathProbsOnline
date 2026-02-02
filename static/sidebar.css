@@ -27,6 +27,7 @@ div.sidebar-item {
 div.sidebar-item:hover {
     transition-duration: 500ms;
     background-color: rgba(0, 0, 191, .2);
+    cursor: pointer;
 }
 
 a.sidebar-link {

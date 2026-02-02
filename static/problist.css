@@ -1,0 +1,62 @@
+
+table.problist {
+    width: 100%;
+    border: 2px solid lightskyblue;
+    border-collapse: collapse;
+    font-family: Andale Mono;
+    tr {
+        height: 35px;
+    }
+    tr:nth-child(even) {
+        background-color: aliceblue;
+    }
+    tr:not(.probhead):hover {
+        background-color: lightblue;
+        cursor: pointer;
+    }
+    th {
+        text-align: left;
+        background-color: lightskyblue;
+    }
+    td, th {
+        border: none;
+    }
+    td.probno {
+        width: 10%;
+    }
+    td.problabels {
+        width: 30%;
+    }
+    td.source {
+        width: 15%;
+    }
+    div.problabel {
+        border: 1px solid paleturquoise;
+        border-radius: 5px;
+        display: inline-block;
+        padding-left: 3px;
+        padding-right: 3px;
+    }
+    div.problabel:hover {
+        background-color: paleturquoise;
+        cursor: pointer;
+    }
+}
+
+form.probquery {
+    border: 2px solid lightskyblue;
+    border-collapse: collapse;
+    padding: 8px;
+    line-height: 250%;
+    input {
+        min-width: 40%;
+        line-height: 24px;
+        margin-right: 8px;
+    }
+    span {
+        white-space: nowrap;
+    }
+    button {
+        line-height: 24px;
+    }
+}

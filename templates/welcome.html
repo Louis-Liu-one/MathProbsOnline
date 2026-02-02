@@ -1,13 +1,3 @@
-<!--<!DOCTYPE html>
-<html>
-<head>
-    <title>欢迎</title>
-</head>
-<body>
-    <h1>欢迎回来，{{ username }}！</h1>
-    <p>您已成功登录系统。</p>
-</body>
-</html>!-->
 {% extends "base.html" %}
 
 {% block title %}欢迎{% endblock %}
@@ -15,6 +5,7 @@
 {% block styles %}
 <link rel="stylesheet" type="text/css" href="/static/sidebar.css">
 <link rel="stylesheet" type="text/css" href="/static/blocks.css">
+<link rel="stylesheet" type="text/css" href="/static/problist.css">
 {% endblock %}
 
 {% block navbar_title %}我的主页{% endblock %}
@@ -30,9 +21,22 @@
     <h3>我通过的题目</h3>
     {% set passedprobs = jsonloads(current_user.passedprobs) %}
     {% if passedprobs %}
-        <table>
-            {% for prob in passedprobs %}
-                <tr><td>{{ prob }}</td></tr>
+        <table class="problist">
+            <tr class="probhead">
+                <th>编号</th><th>名称</th><th>标签</th>
+            </tr>
+            {% for probno in passedprobs %}
+                {% set prob = get_prob(probno) %}
+                <tr onclick="location.href
+                        = '{{ url_for('probs', probno=probno) }}'">
+                    <td class="probno">{{ probno }}</td>
+                    <td>{{ prob.probtitle }}</td>
+                    <td class="problabels">
+                        {% for problabel in jsonloads(prob.problabels) %}
+                            <div class="problabel">{{ problabel }}</div>
+                        {% endfor %}
+                    </td>
+                </tr>
             {% endfor %}
         </table>
     {% else %}<p>暂无</p>{% endif %}

@@ -48,6 +48,7 @@ li.navbar-item {
 li.navbar-item:hover {
     transition-duration: 500ms;
     background-color: rgba(0, 0, 127, .25);
+    cursor: pointer;
 }
 
 a.navbar-item {
