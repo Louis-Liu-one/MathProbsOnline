@@ -8,15 +8,22 @@
 <link rel="stylesheet" type="text/css" href="/static/problist.css">
 {% endblock %}
 
-{% block navbar_title %}题集{% endblock %}
+{% block navbar_title %}
+    {% if oflabel %}标签：{{ labelname }}
+    {% else %}题集{% endif %}
+{% endblock %}
 
 {% block body %}
 <div class="sidebar">
-    <h3 class="sidebar-title">MathProbs题集</h3>
+    <h3 class="sidebar-title">
+        {% if oflabel %}题目标签{% else %}MathProbs题集{% endif %}
+    </h3>
 </div>
 <div class="mainpart">
     <h3>查询题目</h3>
-    <form class="probquery" method="post" action="{{ url_for('problist') }}">
+    <form class="probquery" method="post" action="{% if oflabel %}
+                {{ url_for('problistoflabel', labelname=labelname) }}
+            {% else %}{{ url_for('problist') }}{% endif %}">
         <span><label for="probno">编号：</label>
         <input type="text" id="probno" name="probno" autocomplete="off"
             value="{{ form.get('probno', '') }}"></span>
@@ -49,7 +56,10 @@
                     <td class="probtitle">{{ prob.probtitle }}</td>
                     <td class="problabels">
                         {% for problabel in jsonloads(prob.problabels) %}
-                            <div class="problabel">{{ problabel }}</div>
+                            <a class="problabel" href="{{ url_for(
+                                'problistoflabel', labelname=problabel) }}">
+                                {{ problabel }}
+                            </a>
                         {% endfor %}
                     </td>
                     <td class="source">{{ find_user(prob.source).name }}</td>

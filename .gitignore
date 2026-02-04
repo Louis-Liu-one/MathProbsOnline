@@ -4,8 +4,5 @@ __pycache__
 instance
 webenv
 probs
-static/fonts
-static/auto-render.min.js
-static/katex.min.css
-static/katex.min.js
+static/MathJax
 static/marked.min.js

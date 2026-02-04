@@ -21,6 +21,8 @@ div.mainpart {
 div.bodypart {
     left: 16%;
     width: 45%;
+    display: none;
+    padding: 8px;
     img {
         width: 100%;
     }
@@ -29,10 +31,6 @@ div.bodypart {
 div.submitpart {
     left: 64%;
     width: 31%;
-}
-
-textarea.bodytext, h1 {
-    display: none;
 }
 
 textarea.submittext {

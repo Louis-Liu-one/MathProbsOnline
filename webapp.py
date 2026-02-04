@@ -11,12 +11,12 @@ Copyright (c) 2026 Louis Liu  All rights reserved.
 
 题目：
 /probs                          题集
+/upload-prob                    上传题目
 /probs/<probno>                 题目<probno>
 /probs/<probno>/submit          提交题目<probno>的答案
-/probs/<probno>/solutions       查看题解
-/upload-prob                    上传题目
+/probs/<probno>/solutions/<no>  查看题解
 /probs/<probno>/upload-solution 上传题解
-/tags/<tag>                     题目标签
+/labels/<labelname>             题目标签
 
 计划部署至：MathProbsOnline.PythonAnyWhere.com
 '''
@@ -162,6 +162,18 @@ class ProbImage(db.Model):
         return Response(self.data, mimetype=self.mimetype)
 
 
+class ProbLabel(db.Model):
+    __tablename__ = 'labels'
+    labelname = db.Column(db.String(16), primary_key=True)
+    probs = db.Column(db.Text, default='[]')
+
+    def add_prob(self, probno):
+        updated = set() if self.probs is None else set(json.loads(self.probs))
+        updated.add(probno)
+        self.probs = json.dumps(list(updated), ensure_ascii=False)
+        db.session.commit()
+
+
 def get_prob(probno):
     if isinstance(probno, str):
         return db.session.get(Prob, probno)
@@ -169,11 +181,12 @@ def get_prob(probno):
 
 def search_probs(requirements):
     if not requirements:
-        return db.session.query(Prob)
+        return Prob.query.order_by(Prob.probno.asc())
     return Prob.query.filter(and_(and_(getattr(Prob, key).like(
                 f'%{val}%' if requirement[1] else val)
             for val in requirement[0])
-        for key, requirement in requirements.items()))
+        for key, requirement in requirements.items())).order_by(
+        Prob.probno.asc())
 
 
 def add_prob(**kwargs):
@@ -200,6 +213,19 @@ def add_images(probno, imgfiles):
                 mimetype=mimetypes.guess_type(imgfile.filename)[0])
             db.session.add(img)
     db.session.commit()
+
+
+def get_label(labelname):
+    if isinstance(labelname, str):
+        return db.session.get(ProbLabel, labelname)
+
+
+def add_to_label(labelname, probno):
+    label = get_label(labelname)
+    if label is None:
+        label = ProbLabel(labelname=labelname)
+        db.session.add(label)
+    label.add_prob(probno)
 
 
 # =========================== 题目各项网页 ===========================
@@ -231,6 +257,36 @@ def problist():
     return render_template(
         'problist.html', probs=search_probs(requirements),
         query=bool(requirements), form=form)
+
+
+@app.route('/labels/<labelname>', methods=['GET', 'POST'])
+def problistoflabel(labelname):
+    requirements, form = {'problabels': ([labelname], True)}, {}
+    if request.method == 'POST':
+        for key in (
+                'probno', 'probtitle', 'statement', 'problabels', 'source'):
+            form[key] = request.form.get(key)
+        if form['probno']:
+            requirements['probno'] = [form['probno']], False
+        if form['probtitle']:
+            requirements['probtitle'] = [form['probtitle']], True
+        if form['statement']:
+            requirements['statement'] = [form['statement']], True
+        if form['problabels']:
+            for problabel in csv2list(form['problabels']):
+                requirements['problabels'][0].append(problabel)
+        if form['source']:
+            sourceuid = []
+            for name in csv2list(form['source']):
+                user = find_user(name, 'name')
+                if user:
+                    sourceuid.append(user.uid)
+            if sourceuid:
+                requirements['source'] = sourceuid, False
+    return render_template(
+        'problist.html', labelname=labelname, oflabel=True, form=form,
+        probs=search_probs(requirements),
+        query=bool(requirements) and request.method == 'POST')
 
 
 @app.route('/probs/<probno>')
@@ -270,16 +326,19 @@ def upload_prob():
     if request.method == 'POST':
         probno = request.form.get('probno')
         probtitle = request.form.get('probtitle')
-        problabels = request.form.get('problabels')
+        problabels = [labelname.replace(' ', '')
+            for labelname in csv2list(request.form.get('problabels'))]
         statement = request.form.get('statement')
         answer = request.form.get('answer')
         imgfiles = request.files.getlist('imgfiles')
         add_prob(
             probno=probno, probtitle=probtitle,
-            problabels=json.dumps(csv2list(problabels), ensure_ascii=False),
+            problabels=json.dumps(problabels, ensure_ascii=False),
             statement='\n' + statement, answer=answer,
             source=current_user.uid)
         add_images(probno, imgfiles)
+        for labelname in problabels:
+            add_to_label(labelname, probno)
         return redirect(url_for('probs', probno=probno))
     return render_template('upload_prob.html')
 

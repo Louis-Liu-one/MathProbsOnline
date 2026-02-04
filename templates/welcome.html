@@ -13,7 +13,7 @@
 {% block body %}
 <div class="sidebar">
     <h3 class="sidebar-title">欢迎来到MathProbsOnline</h3>
-    <a class="sidebar-link" href="/edit-profile">
+    <a class="sidebar-link" href="{{ url_for('edit_profile') }}">
         <div class="sidebar-item">修改简介</div>
     </a>
 </div>
@@ -21,6 +21,7 @@
     <h3>我通过的题目</h3>
     {% set passedprobs = jsonloads(current_user.passedprobs) %}
     {% if passedprobs %}
+        {% if passedprobs.sort() %}{% endif %}
         <table class="problist">
             <tr class="probhead">
                 <th>编号</th><th>名称</th><th>标签</th>
@@ -33,7 +34,10 @@
                     <td>{{ prob.probtitle }}</td>
                     <td class="problabels">
                         {% for problabel in jsonloads(prob.problabels) %}
-                            <div class="problabel">{{ problabel }}</div>
+                            <a class="problabel" href="{{ url_for(
+                                'problistoflabel', labelname=problabel) }}">
+                                {{ problabel }}
+                            </a>
                         {% endfor %}
                     </td>
                 </tr>

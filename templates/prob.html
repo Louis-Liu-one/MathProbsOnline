@@ -13,20 +13,22 @@
 <div class="sidebar">
     {% set problabels = jsonloads(prob.problabels) %}
     {% if problabels %}
-    <h3 class="sidebar-title">题目标签</h3>
-    {% for label in problabels %}
-    <div class="sidebar-item">{{ label }}</div>
-    {% endfor %}{% endif %}
+        <h3 class="sidebar-title">题目标签</h3>
+        {% for label in problabels %}
+            <a class="sidebar-link" href="{{ url_for(
+                    'problistoflabel', labelname=label) }}">
+                <div class="sidebar-item">{{ label }}</div>
+            </a>
+        {% endfor %}
+    {% endif %}
     {% set source = find_user(prob.source) %}
     {% if source %}
-    <h3 class="sidebar-title">来源</h3>
-    <div class="sidebar-item">{{ source.name }}</div>
+        <h3 class="sidebar-title">来源</h3>
+        <div class="sidebar-item">{{ source.name }}</div>
     {% endif %}
 </div>
 <div id="bodydiv" class="bodypart">
-    <textarea id="bodytext" class="bodytext" readonly>
-        {{ prob.statement }}
-    </textarea>
+    {{ prob.statement }}
 </div>
 <div id="submitdiv" class="submitpart">
     <h3>提交答案</h3>
@@ -37,5 +39,7 @@
         <button class="submitbutton" type="submit">提交</button>
     </form>
 </div>
-<script type="text/javascript" src="/static/md-render.js"></script>
+<script src="/static/mathjax-config.js"></script>
+<script src="/static/MathJax/tex-chtml.js"></script>
+<script src="/static/md-render.js"></script>
 {% endblock %}
