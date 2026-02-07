@@ -417,7 +417,7 @@ def edit_profile():
 def avatarfile():
     if current_user.avatar:
         return current_user.avatar_response()
-    return send_file('static/images/navbars/avatar.png')
+    return send_file('static/images/navbars/avatar.svg')
 
 
 @app.route('/logout')

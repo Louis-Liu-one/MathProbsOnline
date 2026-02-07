@@ -28,7 +28,7 @@
     {% endif %}
 </div>
 <div id="bodydiv" class="bodypart">
-    {{ prob.statement }}
+    <textarea id="bodytext">{{ prob.statement }}</textarea>
 </div>
 <div id="submitdiv" class="submitpart">
     <h3>提交答案</h3>
@@ -39,7 +39,5 @@
         <button class="submitbutton" type="submit">提交</button>
     </form>
 </div>
-<script src="/static/mathjax-config.js"></script>
-<script src="/static/MathJax/tex-chtml.js"></script>
 <script src="/static/md-render.js"></script>
 {% endblock %}

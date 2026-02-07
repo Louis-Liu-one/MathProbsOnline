@@ -26,7 +26,7 @@
     <div class="sidebar-item">{{ username }}</div>
 </div>
 <div id="bodydiv" class="bodypart">
-    {{ solution }}
+    <textarea id="bodytext">{{ solution }}</textarea>
 </div>
 <div id="submitdiv" class="submitpart">
     <h3>更多题解</h3>
@@ -43,7 +43,5 @@
     <p>暂无</p>
     {% endif %}
 </div>
-<script src="/static/mathjax-config.js"></script>
-<script src="/static/MathJax/tex-chtml.js"></script>
 <script src="/static/md-render.js"></script>
 {% endblock %}

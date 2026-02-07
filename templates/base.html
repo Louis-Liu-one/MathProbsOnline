@@ -4,8 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% endblock %}</title>
-    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
-    <script type="text/javascript" src="/static/marked.min.js"></script>
+    <link rel="icon" type="image/svg" href="/static/images/favicon.svg">
+    <script type="text/javascript" src="/static/katex.min.js"></script>
+    <script type="text/javascript" src="/static/markdown-it.min.js"></script>
+    <script type="text/javascript" src="/static/texmath.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/katex.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/texmath.min.css">
     <link rel="stylesheet" type="text/css" href="/static/base.css">
     {% block styles %}{% endblock %}
 </head>
@@ -15,7 +19,7 @@
             <li class="logo-image">
                 <a class="navbar-item navbar-avatar" href="#"
                     style="background-image:
-                    url(/static/images/favicon.ico);">
+                    url(/static/images/favicon.svg);">
                     MathProbs
                 </a>
             </li>
@@ -24,19 +28,19 @@
             </li>
             <li class="navbar-item">
                 <a class="navbar-item" href="#" style="background-image:
-                    url(/static/images/help.png);">
+                    url(/static/images/help.svg);">
                     帮助
                 </a>
             </li>
             <li class="navbar-item">
                 <a class="navbar-item" href="#" style="background-image:
-                    url(/static/images/labels.png);">
+                    url(/static/images/labels.svg);">
                     标签
                 </a>
             </li>
             <li class="navbar-item">
                 <a class="navbar-item" href="{{ url_for('problist') }}"
-                    style="background-image: url(/static/images/library.png);">
+                    style="background-image: url(/static/images/library.svg);">
                     题集
                 </a>
             </li>
@@ -49,7 +53,7 @@
                 {% else %}
                 <a class="navbar-item navbar-avatar" href="/login"
                     style="background-image:
-                    url(/static/images/avatar.png)">
+                    url(/static/images/avatar.svg)">
                     未登录
                 </a>
                 {% endif %}
