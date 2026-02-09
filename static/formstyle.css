@@ -1,0 +1,27 @@
+
+form.mathprobsform {
+    border: 2px solid lightskyblue;
+    border-collapse: collapse;
+    padding: 8px;
+    line-height: 250%;
+    span {
+        white-space: nowrap;
+    }
+    label {
+        vertical-align: top;
+    }
+    input, textarea {
+        min-width: 40%;
+        line-height: 24px;
+        margin-right: 8px;
+    }
+    textarea {
+        min-width: 80%;
+        max-width: 93%;
+        height: 150px;
+    }
+    button {
+        line-height: 24px;
+        cursor: pointer;
+    }
+}

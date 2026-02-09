@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}{{ prob.probno }} - MathProbs{% endblock %}
+{% block title %}问题{{ prob.probno }}的题解 - MathProbs{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" type="text/css" href="/static/sidebar.css">
 <link rel="stylesheet" type="text/css" href="/static/blocks.css">
 {% endblock %}
 
-{% block navbar_title %}{{ prob.probno }}的题解：{{ soltitle }}{% endblock %}
+{% block navbar_title %}{{ prob.probno }}的题解 —— {{ soltitle }}{% endblock %}
 
 {% block body %}
 <div class="sidebar">
@@ -32,10 +32,10 @@
     <h3>更多题解</h3>
     {% if suggested %}
         <table>
-            {% for uid, soltitle, _ in suggested %}
+            {% for solution in suggested %}
                 <tr>
-                    <td>{{ soltitle }}</td>
-                    <td>by {{ find_user(uid).name }}</td>
+                    <td>{{ solution.title }}</td>
+                    <td>by {{ find_user(solution.user).name }}</td>
                 </tr>
             {% endfor %}
         </table>

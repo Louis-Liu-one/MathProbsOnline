@@ -44,21 +44,3 @@ table.problist {
         cursor: pointer;
     }
 }
-
-form.probquery {
-    border: 2px solid lightskyblue;
-    border-collapse: collapse;
-    padding: 8px;
-    line-height: 250%;
-    input {
-        min-width: 40%;
-        line-height: 24px;
-        margin-right: 8px;
-    }
-    span {
-        white-space: nowrap;
-    }
-    button {
-        line-height: 24px;
-    }
-}

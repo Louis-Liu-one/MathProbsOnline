@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}{{ prob.probno }} - MathProbs{% endblock %}
+{% block title %}问题{{ prob.probno }} - MathProbs{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" type="text/css" href="/static/sidebar.css">
 <link rel="stylesheet" type="text/css" href="/static/blocks.css">
 {% endblock %}
 
-{% block navbar_title %}{{ prob.probno }} {{ prob.probtitle }}{% endblock %}
+{% block navbar_title %}问题{{ prob.probno }} {{ prob.probtitle }}{% endblock %}
 
 {% block body %}
 <div class="sidebar">
@@ -37,6 +37,13 @@
         <textarea name="submittext" class="submittext"
             placeholder="按照要求提交答案" rows="10"></textarea>
         <button class="submitbutton" type="submit">提交</button>
+    </form>
+    <h3>讨论区</h3>
+    <form id="discussionform" method="POST"
+        action="/probs/{{ prob.probno }}/submit">
+        <textarea name="discussiontext" class="submittext"
+            placeholder="发表见解，以Markdown格式" rows="6"></textarea>
+        <button class="submitbutton" type="submit">发表</button>
     </form>
 </div>
 <script src="/static/md-render.js"></script>

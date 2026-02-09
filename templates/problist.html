@@ -6,6 +6,7 @@
 <link rel="stylesheet" type="text/css" href="/static/sidebar.css">
 <link rel="stylesheet" type="text/css" href="/static/blocks.css">
 <link rel="stylesheet" type="text/css" href="/static/problist.css">
+<link rel="stylesheet" type="text/css" href="/static/formstyle.css">
 {% endblock %}
 
 {% block navbar_title %}
@@ -21,7 +22,7 @@
 </div>
 <div class="mainpart">
     <h3>查询题目</h3>
-    <form class="probquery" method="post" action="{% if oflabel %}
+    <form class="mathprobsform" method="post" action="{% if oflabel %}
                 {{ url_for('problistoflabel', labelname=labelname) }}
             {% else %}{{ url_for('problist') }}{% endif %}">
         <span><label for="probno">编号：</label>

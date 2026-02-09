@@ -1,29 +1,60 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>上传题解</title>
-</head>
-<body>
-    <h2>上传问题{{ probno }}的题解</h2>
-    <form method="post" action="/probs/{{ probno }}/upload-solution"
-        enctype="multipart/form-data">
-        <div>
-            <label for="soltitle">题解标题：</label><br>
-            <input type="text" id="soltitle" name="soltitle">
-        </div>
-        <div>
-            <label for="solution">题解内容：</label><br>
-            <textarea id="solution" name="solution"
-                placeholder="以Markdown格式输入题解" required></textarea>
-        </div>
-        <div>
-            <label for="imgfiles">图片：</label><br>
+{% extends "base.html" %}
+
+{% block title %}上传题解 - MathProbs{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='sidebar.css') }}">
+<link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='blocks.css') }}">
+<link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='formstyle.css') }}">
+{% endblock %}
+
+{% block navbar_title %}问题{{ prob.probno }} —— 上传题解{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    <h3 class="sidebar-title">上传题解</h3>
+    <a class="sidebar-link" href="{{ url_for('probs', probno=prob.probno) }}">
+        <div class="sidebar-item">返回题目</div>
+    </a>
+    {% set problabels = jsonloads(prob.problabels) %}
+    {% if problabels %}
+        <h3 class="sidebar-title">题目标签</h3>
+        {% for label in problabels %}
+            <a class="sidebar-link" href="{{ url_for(
+                    'problistoflabel', labelname=label) }}">
+                <div class="sidebar-item">{{ label }}</div>
+            </a>
+        {% endfor %}
+    {% endif %}
+    {% set source = find_user(prob.source) %}
+    {% if source %}
+        <h3 class="sidebar-title">来源</h3>
+        <div class="sidebar-item">{{ source.name }}</div>
+    {% endif %}
+</div>
+<div class="mainpart">
+    <h3>上传题解</h3>
+    <form class="mathprobsform" method="post" action="
+            {{ url_for('upload_solution', probno=prob.probno) }}"
+            enctype="multipart/form-data">
+        <span>
+            <label for="soltitle">标题：</label>
+            <input type="text" id="soltitle" name="soltitle"
+                autocomplete="off" required>
+        </span>
+        <span>
+            <label for="solution">内容：</label>
+            <textarea id="solution" name="solution" required></textarea>
+        </span>
+        <span>
+            <label for="imgfiles">图片：</label>
             <input type="file" id="imgfiles" name="imgfiles"
                 formenctype="multipart/form-data" multiple>
-        </div>
-        <div>
-            <button type="submit">上传</button>
-        </div>
+        </span>
+        <button type="submit">上传</button>
     </form>
-</body>
-</html>
+</div>
+{% endblock %}

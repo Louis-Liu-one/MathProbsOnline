@@ -39,7 +39,7 @@ from fpevaluator import fpeval
 
 
 app = Flask(__name__)
-app.secret_key = 'MathProbs#Online@Secret-Key'
+app.secret_key = '2042090d09526f304d37c436f27a5d08'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite3'
 db = SQLAlchemy(app)
 
@@ -134,19 +134,22 @@ class Prob(db.Model):
     problabels = db.Column(db.Text, default='[]')
     statement = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text)
-    solutions = db.Column(db.Text, default='[]')
+    solutions = db.relationship('ProbSolution', backref='prob', lazy=True)
     source = db.Column(db.Integer)
 
     def check_answer(self, userans):
         return fpeval(userans) == fpeval(self.answer) \
             if userans and self.answer else False
 
-    def add_solution(self, uid, solution):
-        if find_user(uid) and isinstance(solution, str):
-            updated = json.loads(self.solutions)
-            updated.append((uid, solution))
-            self.solutions = json.dumps(updated, ensure_ascii=False)
-            db.session.commit()
+
+class ProbSolution(db.Model):
+    __tablename__ = 'solutions'
+    solutionid = db.Column(db.Integer, primary_key=True)
+    probno = db.Column(
+        db.String(5), db.ForeignKey('probs.probno'), nullable=False)
+    user = db.Column(db.Integer, nullable=False)
+    title = db.Column(db.String(128), nullable=False)
+    content = db.Column(db.Text, nullable=False)
 
 
 class ProbImage(db.Model):
@@ -195,11 +198,11 @@ def add_prob(**kwargs):
     db.session.commit()
 
 
-def add_solution(probno, soltitle, solution):
+def add_solution(probno, title, content):
     prob = get_prob(probno)
-    updated = json.loads(prob.solutions)
-    updated.append((current_user.uid, soltitle, solution))
-    prob.solutions = json.dumps(updated, ensure_ascii=False)
+    solution = ProbSolution(
+        prob=prob, user=current_user.uid, title=title, content=content)
+    db.session.add(solution)
     db.session.commit()
 
 
@@ -311,8 +314,9 @@ def submit(probno):
 @app.route('/probs/<probno>/solutions/<int:solno>')
 def solutions(probno, solno):
     prob = get_prob(probno)
-    solutions = json.loads(prob.solutions)
-    uid, soltitle, solution = solutions.pop(solno)
+    solutions = prob.solutions.copy()
+    sol = solutions.pop(solno)
+    uid, soltitle, solution = sol.user, sol.title, sol.content
     suggested = random.sample(solutions, min(len(solutions), 3))
     user = find_user(uid)
     return render_template(
@@ -353,7 +357,7 @@ def upload_solution(probno):
         add_solution(probno, soltitle, '\n' + solution)
         add_images(probno, imgfiles)
         return redirect(url_for('home'))
-    return render_template('upload_solution.html', probno=probno)
+    return render_template('upload_solution.html', prob=get_prob(probno))
 
 
 # =========================== 登录系统网页 ===========================
