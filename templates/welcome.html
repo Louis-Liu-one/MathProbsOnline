@@ -19,18 +19,18 @@
 </div>
 <div class="mainpart">
     <h3>我通过的题目</h3>
-    {% set passedprobs = jsonloads(current_user.passedprobs) %}
-    {% if passedprobs %}
-        {% if passedprobs.sort() %}{% endif %}
+    {% set passedsubs = current_user.passedsubs.copy() %}
+    {% if passedsubs %}
+        {% if passedsubs.sort() %}{% endif %}
         <table class="problist">
             <tr class="probhead">
                 <th>编号</th><th>名称</th><th>标签</th>
             </tr>
-            {% for probno in passedprobs %}
-                {% set prob = get_prob(probno) %}
+            {% for sub in passedsubs %}
+                {% set prob = sub.prob %}
                 <tr onclick="location.href
-                        = '{{ url_for('probs', probno=probno) }}'">
-                    <td class="probno">{{ probno }}</td>
+                        = '{{ url_for('probs', probno=prob.probno) }}'">
+                    <td class="probno">{{ prob.probno }}</td>
                     <td>{{ prob.probtitle }}</td>
                     <td class="problabels">
                         {% for problabel in jsonloads(prob.problabels) %}
@@ -44,6 +44,30 @@
             {% endfor %}
         </table>
     {% else %}<p>暂无</p>{% endif %}
-    <h3>我贡献的题目</h3>
+    <h3>我上传的题目</h3>
+    {% set uploadedprobs = current_user.uploadedprobs.copy() %}
+    {% if uploadedprobs %}
+        {% if uploadedprobs.sort() %}{% endif %}
+        <table class="problist">
+            <tr class="probhead">
+                <th>编号</th><th>名称</th><th>标签</th>
+            </tr>
+            {% for prob in uploadedprobs %}
+                <tr onclick="location.href
+                        = '{{ url_for('probs', probno=prob.probno) }}'">
+                    <td class="probno">{{ prob.probno }}</td>
+                    <td>{{ prob.probtitle }}</td>
+                    <td class="problabels">
+                        {% for problabel in jsonloads(prob.problabels) %}
+                            <a class="problabel" href="{{ url_for(
+                                'problistoflabel', labelname=problabel) }}">
+                                {{ problabel }}
+                            </a>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}<p>暂无</p>{% endif %}
 </div>
 {% endblock %}

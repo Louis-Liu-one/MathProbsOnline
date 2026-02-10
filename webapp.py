@@ -32,7 +32,7 @@ from flask_login import LoginManager, UserMixin, current_user
 from flask_login import login_required, login_user, logout_user
 from flask_sqlalchemy import SQLAlchemy
 
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from fpevaluator import fpeval
@@ -53,19 +53,33 @@ login_manager.init_app(app)
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
     columns = 'uid', 'name', 'password'
-    jsoncolumns = 'passedprobs',
     uid = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True, nullable=False)
     password = db.Column(db.String(256), nullable=False)
     avatar = db.Column(db.LargeBinary)
-    passedprobs = db.Column(db.Text, default='[]')
+    avmimetype = db.Column(db.String(64))
+    allsubs = db.relationship(
+        'Submission', backref='user', lazy=True, cascade='all, delete',
+        overlaps='user,passedsubs,triedsubs')
+    passedsubs = db.relationship(
+        'Submission', lazy=True,
+        overlaps=','.join(['user', 'allsubs', 'triedsubs']),
+        primaryjoin='and_(Submission.userid == User.uid, '
+        'Submission.ispassed == True)')
+    triedsubs = db.relationship(
+        'Submission', lazy=True,
+        overlaps=','.join(['user', 'allsubs', 'passedsubs']),
+        primaryjoin='and_(Submission.userid == User.uid, '
+        'Submission.ispassed == False)')
+    uploadedprobs = db.relationship('Prob', backref='source', lazy=True)
+    solutions = db.relationship('ProbSolution', backref='user', lazy=True)
 
     def verify_password(self, password):
         return False if self.password is None else \
             check_password_hash(self.password, password)
 
     def avatar_response(self):
-        return Response(self.avatar, mimetype='image/x-icon')
+        return Response(self.avatar, mimetype=self.avmimetype)
 
     def get_id(self):
         return self.uid
@@ -79,15 +93,6 @@ def find_user(val, key='uid'):
     return user if user is not None else None
 
 
-def add_to_json_column(user, key, value):
-    if user and key in User.jsoncolumns:
-        updated = json.loads(getattr(user, key))
-        if str(value) not in updated:
-            updated.append(str(value))
-        setattr(user, key, json.dumps(updated, ensure_ascii=False))
-        db.session.commit()
-
-
 def csv2list(csvstr):
     return next(csv.reader((csvstr,), skipinitialspace=True))
 
@@ -97,24 +102,27 @@ def load_user(uid):
     return find_user(uid)
 
 
-def register_user(name, password, avatar):
+def register_user(name, password, avatarfile):
     if name and password:
         user = User(
             name=name, password=generate_password_hash(password))
-        if avatar is not None:
-            user.avatar = avatar.read()
+        if avatarfile is not None:
+            user.avatar = avatarfile.read()
+            user.avmimetype = mimetypes.guess_type(avatarfile.filename)[0]
         db.session.add(user)
         db.session.commit()
         return user
 
 
-def edit_user_profile(name, password, avatardata):
+def edit_user_profile(name, password, avatarfile):
+    avatardata = avatarfile.read()
     if name and name != current_user.name:
         current_user.name = name
     if password and not current_user.verify_password(password):
         current_user.password = password
     if avatardata and avatardata != current_user.avatar:
         current_user.avatar = avatardata
+        current_user.avmimetype = mimetypes.guess_type(avatarfile.filename)[0]
     db.session.commit()
 
 
@@ -134,12 +142,38 @@ class Prob(db.Model):
     problabels = db.Column(db.Text, default='[]')
     statement = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text)
-    solutions = db.relationship('ProbSolution', backref='prob', lazy=True)
-    source = db.Column(db.Integer)
+    solutions = db.relationship(
+        'ProbSolution', backref='prob', lazy=True, cascade='all, delete')
+    sourceuid = db.Column(db.Integer, db.ForeignKey('users.uid'))
+    submissions = db.relationship(
+        'Submission', backref='prob', lazy=True, cascade='all, delete')
 
-    def check_answer(self, userans):
-        return fpeval(userans) == fpeval(self.answer) \
-            if userans and self.answer else False
+    def check_answer(self, answer):
+        return fpeval(answer) == fpeval(self.answer) \
+            if answer and self.answer else False
+
+    def create_submission(self, user, answer):
+        ispassed = self.check_answer(answer)
+        return Submission(
+            prob=self, user=user, answer=answer, ispassed=ispassed,
+            score=100 if ispassed else 0)
+
+    def __lt__(self, prob):
+        return self.probno < prob.probno
+
+
+class Submission(db.Model):
+    __tablename__ = 'submissions'
+    submitid = db.Column(db.Integer, primary_key=True)
+    probno = db.Column(
+        db.String(5), db.ForeignKey('probs.probno'), nullable=False)
+    userid = db.Column(db.Integer, db.ForeignKey('users.uid'), nullable=False)
+    answer = db.Column(db.Text, nullable=False)
+    ispassed = db.Column(db.Boolean)
+    score = db.Column(db.Integer)
+
+    def __lt__(self, sub):
+        return self.probno < sub.probno
 
 
 class ProbSolution(db.Model):
@@ -147,7 +181,7 @@ class ProbSolution(db.Model):
     solutionid = db.Column(db.Integer, primary_key=True)
     probno = db.Column(
         db.String(5), db.ForeignKey('probs.probno'), nullable=False)
-    user = db.Column(db.Integer, nullable=False)
+    userid = db.Column(db.Integer, db.ForeignKey('users.uid'), nullable=False)
     title = db.Column(db.String(128), nullable=False)
     content = db.Column(db.Text, nullable=False)
 
@@ -182,14 +216,33 @@ def get_prob(probno):
         return db.session.get(Prob, probno)
 
 
-def search_probs(requirements):
+def search_probs(form, extra_req=None):
+    requirements = []
+    if form.get('probno'):
+        requirements.append(Prob.probno == form['probno'])
+    if form.get('probtitle'):
+        requirements.append(Prob.probtitle.like(f'%{form['probtitle']}%'))
+    if form.get('statement'):
+        requirements.append(Prob.statement.like(f'%{form['statement']}%'))
+    if form.get('problabels'):
+        requirements.append(or_(Prob.problabels.like(
+            f'%{problabels}%') for problabels
+                in csv2list(form['problabels'])))
+    if form.get('source'):
+        source = []
+        for name in csv2list(form['source']):
+            user = find_user(name, 'name')
+            if user:
+                source.append(user)
+        if source:
+            requirements.append(or_(Prob.source == user for user in source))
+    flag = bool(requirements)
+    if extra_req is not None:
+        requirements.append(extra_req)
     if not requirements:
-        return Prob.query.order_by(Prob.probno.asc())
-    return Prob.query.filter(and_(and_(getattr(Prob, key).like(
-                f'%{val}%' if requirement[1] else val)
-            for val in requirement[0])
-        for key, requirement in requirements.items())).order_by(
-        Prob.probno.asc())
+        return Prob.query.order_by(Prob.probno.asc()), flag
+    return Prob.query.filter(and_(*requirements)).order_by(
+        Prob.probno.asc()), flag
 
 
 def add_prob(**kwargs):
@@ -201,7 +254,7 @@ def add_prob(**kwargs):
 def add_solution(probno, title, content):
     prob = get_prob(probno)
     solution = ProbSolution(
-        prob=prob, user=current_user.uid, title=title, content=content)
+        prob=prob, user=current_user, title=title, content=content)
     db.session.add(solution)
     db.session.commit()
 
@@ -236,60 +289,27 @@ def add_to_label(labelname, probno):
 
 @app.route('/probs', methods=['GET', 'POST'])
 def problist():
-    requirements, form = {}, {}
+    form = {}
     if request.method == 'POST':
         for key in (
                 'probno', 'probtitle', 'statement', 'problabels', 'source'):
             form[key] = request.form.get(key)
-        if form['probno']:
-            requirements['probno'] = [form['probno']], False
-        if form['probtitle']:
-            requirements['probtitle'] = [form['probtitle']], True
-        if form['statement']:
-            requirements['statement'] = [form['statement']], True
-        if form['problabels']:
-            requirements['problabels'] = csv2list(form['problabels']), True
-        if form['source']:
-            sourceuid = []
-            for name in csv2list(form['source']):
-                user = find_user(name, 'name')
-                if user:
-                    sourceuid.append(user.uid)
-            if sourceuid:
-                requirements['source'] = sourceuid, False
+    probs, query = search_probs(form)
     return render_template(
-        'problist.html', probs=search_probs(requirements),
-        query=bool(requirements), form=form)
+        'problist.html', probs=probs, query=query, form=form)
 
 
 @app.route('/labels/<labelname>', methods=['GET', 'POST'])
 def problistoflabel(labelname):
-    requirements, form = {'problabels': ([labelname], True)}, {}
+    form = {}
     if request.method == 'POST':
         for key in (
                 'probno', 'probtitle', 'statement', 'problabels', 'source'):
             form[key] = request.form.get(key)
-        if form['probno']:
-            requirements['probno'] = [form['probno']], False
-        if form['probtitle']:
-            requirements['probtitle'] = [form['probtitle']], True
-        if form['statement']:
-            requirements['statement'] = [form['statement']], True
-        if form['problabels']:
-            for problabel in csv2list(form['problabels']):
-                requirements['problabels'][0].append(problabel)
-        if form['source']:
-            sourceuid = []
-            for name in csv2list(form['source']):
-                user = find_user(name, 'name')
-                if user:
-                    sourceuid.append(user.uid)
-            if sourceuid:
-                requirements['source'] = sourceuid, False
+    probs, query = search_probs(form, Prob.problabels.like(f'%{labelname}%'))
     return render_template(
         'problist.html', labelname=labelname, oflabel=True, form=form,
-        probs=search_probs(requirements),
-        query=bool(requirements) and request.method == 'POST')
+        probs=probs, query=query)
 
 
 @app.route('/probs/<probno>')
@@ -305,9 +325,10 @@ def imagefile(probno, image):
 @app.route('/probs/<probno>/submit', methods=['POST'])
 def submit(probno):
     userans = request.form.get('submittext')
-    result = get_prob(probno).check_answer(userans)
-    if result:
-        add_to_json_column(current_user, 'passedprobs', probno)
+    prob = get_prob(probno)
+    db.session.add(prob.create_submission(current_user, userans))
+    db.session.commit()
+    result = prob.check_answer(userans)
     return str(result)
 
 
@@ -316,9 +337,8 @@ def solutions(probno, solno):
     prob = get_prob(probno)
     solutions = prob.solutions.copy()
     sol = solutions.pop(solno)
-    uid, soltitle, solution = sol.user, sol.title, sol.content
+    user, soltitle, solution = sol.user, sol.title, sol.content
     suggested = random.sample(solutions, min(len(solutions), 3))
-    user = find_user(uid)
     return render_template(
         'solutions.html', prob=prob, username=user.name,
         soltitle=soltitle, solution=solution, suggested=suggested)
@@ -330,7 +350,8 @@ def upload_prob():
     if request.method == 'POST':
         probno = request.form.get('probno')
         probtitle = request.form.get('probtitle')
-        problabels = [labelname.replace(' ', '')
+        problabels = [
+            labelname.replace(' ', '')
             for labelname in csv2list(request.form.get('problabels'))]
         statement = request.form.get('statement')
         answer = request.form.get('answer')
@@ -338,8 +359,7 @@ def upload_prob():
         add_prob(
             probno=probno, probtitle=probtitle,
             problabels=json.dumps(problabels, ensure_ascii=False),
-            statement='\n' + statement, answer=answer,
-            source=current_user.uid)
+            statement='\n' + statement, answer=answer, source=current_user)
         add_images(probno, imgfiles)
         for labelname in problabels:
             add_to_label(labelname, probno)
@@ -411,8 +431,8 @@ def edit_profile():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        avatar = request.files['avatar']
-        edit_user_profile(username, password, avatar.read())
+        avatar = request.files.get('avatar')
+        edit_user_profile(username, password, avatar)
         return redirect(url_for('welcome'))
     return render_template('edit_profile.html')
 
@@ -421,7 +441,7 @@ def edit_profile():
 def avatarfile():
     if current_user.avatar:
         return current_user.avatar_response()
-    return send_file('static/images/navbars/avatar.svg')
+    return send_file('static/images/avatar.svg')
 
 
 @app.route('/logout')
@@ -440,8 +460,6 @@ def unregister():
 
 
 app.add_template_global(json.loads, 'jsonloads')
-app.add_template_global(find_user, 'find_user')
-app.add_template_global(get_prob, 'get_prob')
 with app.app_context():
     db.create_all()
 

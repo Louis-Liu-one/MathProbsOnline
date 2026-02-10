@@ -18,6 +18,7 @@ form.mathprobsform {
     textarea {
         min-width: 80%;
         max-width: 93%;
+        min-height: 50px;
         height: 150px;
     }
     button {

@@ -17,10 +17,9 @@
     {% for label in problabels %}
     <div class="sidebar-item">{{ label }}</div>
     {% endfor %}{% endif %}
-    {% set source = find_user(prob.source) %}
-    {% if source %}
+    {% if prob.source %}
     <h3 class="sidebar-title">题目来源</h3>
-    <div class="sidebar-item">{{ source.name }}</div>
+    <div class="sidebar-item">{{ prob.source.name }}</div>
     {% endif %}
     <h3 class="sidebar-title">题解来源</h3>
     <div class="sidebar-item">{{ username }}</div>
@@ -35,7 +34,7 @@
             {% for solution in suggested %}
                 <tr>
                     <td>{{ solution.title }}</td>
-                    <td>by {{ find_user(solution.user).name }}</td>
+                    <td>by {{ solution.user.name }}</td>
                 </tr>
             {% endfor %}
         </table>

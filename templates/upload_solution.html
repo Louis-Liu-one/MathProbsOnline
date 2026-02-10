@@ -29,10 +29,9 @@
             </a>
         {% endfor %}
     {% endif %}
-    {% set source = find_user(prob.source) %}
-    {% if source %}
+    {% if prob.source %}
         <h3 class="sidebar-title">来源</h3>
-        <div class="sidebar-item">{{ source.name }}</div>
+        <div class="sidebar-item">{{ prob.source.name }}</div>
     {% endif %}
 </div>
 <div class="mainpart">
