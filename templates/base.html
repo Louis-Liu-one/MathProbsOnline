@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% endblock %}</title>
-    <link rel="icon" type="image/svg" href="/static/images/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
     <script type="text/javascript" src="/static/katex.min.js"></script>
     <script type="text/javascript" src="/static/markdown-it.min.js"></script>
     <script type="text/javascript" src="/static/texmath.min.js"></script>
@@ -18,8 +18,8 @@
         <ul class="navbar-items">
             <li class="logo-image">
                 <a class="navbar-item navbar-avatar" href="#"
-                    style="background-image:
-                    url(/static/images/favicon.svg);">
+                    style="background-image: url({{ url_for('static',
+                        filename='images/favicon.svg') }});">
                     MathProbs
                 </a>
             </li>
@@ -28,32 +28,34 @@
             </li>
             <li class="navbar-item">
                 <a class="navbar-item" href="#" style="background-image:
-                    url(/static/images/help.svg);">
+                    url({{ url_for('static', filename='images/help.svg') }});">
                     帮助
                 </a>
             </li>
             <li class="navbar-item">
                 <a class="navbar-item" href="#" style="background-image:
-                    url(/static/images/labels.svg);">
+                    url({{ url_for('static', filename='images/labels.svg') }});">
                     标签
                 </a>
             </li>
             <li class="navbar-item">
                 <a class="navbar-item" href="{{ url_for('problist') }}"
-                    style="background-image: url(/static/images/library.svg);">
+                    style="background-image: url({{ url_for('static',
+                        filename='images/library.svg') }});">
                     题集
                 </a>
             </li>
             <li class="navbar-item">
                 {% if current_user.is_authenticated %}
                 <a class="navbar-item navbar-avatar" href="/welcome"
-                    style="background-image: url(/avatars/current)">
+                    style="background-image: url({{ url_for('avatarfile',
+                        uid=current_user.uid) }})">
                     {{ current_user.name }}
                 </a>
                 {% else %}
                 <a class="navbar-item navbar-avatar" href="/login"
                     style="background-image:
-                    url(/static/images/avatar.svg)">
+                    url({{ url_for('static', filename='images/avatar.svg') }})">
                     未登录
                 </a>
                 {% endif %}

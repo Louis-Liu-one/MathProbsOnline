@@ -9,6 +9,7 @@ div.sidebar {
     padding-left: 0px;
     width: 16%;
     height: 100%;
+    font-family: Helvetica;
 }
 
 div.sidebar-item {
@@ -32,7 +33,6 @@ div.sidebar-item:hover {
 
 a.sidebar-link {
     text-decoration: none;
-    font-family: Arial;
 }
 
 h3.sidebar-title {

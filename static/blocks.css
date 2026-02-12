@@ -10,6 +10,7 @@ div.mainpart, div.bodypart, div.submitpart {
     overflow-y: auto;
     border-radius: 4px;
     box-shadow: 1px 1px 3px rgba(0, 0, 0, .5);
+    font-family: Helvetica;
 }
 
 div.mainpart {
@@ -39,5 +40,8 @@ div.submitpart {
     }
     button.submitbutton {
         float: right;
+    }
+    h3 {
+        clear: both;
     }
 }

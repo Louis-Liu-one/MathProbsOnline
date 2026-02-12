@@ -3,38 +3,56 @@
 {% block title %}问题{{ prob.probno }}的题解 - MathProbs{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" type="text/css" href="/static/sidebar.css">
-<link rel="stylesheet" type="text/css" href="/static/blocks.css">
+<link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='sidebar.css') }}">
+<link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='blocks.css') }}">
 {% endblock %}
 
-{% block navbar_title %}{{ prob.probno }}的题解 —— {{ soltitle }}{% endblock %}
+{% block navbar_title %}
+{{ prob.probno }}的题解 —— {{ solution.title }}
+{% endblock %}
 
 {% block body %}
 <div class="sidebar">
+    <h3 class="sidebar-title">查看题解</h3>
+    <a class="sidebar-link" href="{{ url_for('probs', probno=prob.probno) }}">
+        <div class="sidebar-item">返回题目</div>
+    </a>
+    {% if current_user == solution.user %}
+        <a class="sidebar-link" href="{{ url_for('edit_solution',
+                probno=prob.probno, solno=solution.solno) }}">
+            <div class="sidebar-item">编辑题解</div>
+        </a>
+    {% endif %}
     {% set problabels = jsonloads(prob.problabels) %}
     {% if problabels %}
-    <h3 class="sidebar-title">题目标签</h3>
-    {% for label in problabels %}
-    <div class="sidebar-item">{{ label }}</div>
-    {% endfor %}{% endif %}
+        <h3 class="sidebar-title">题目标签</h3>
+        {% for label in problabels %}
+            <a class="sidebar-link" href="{{ url_for(
+                    'problistoflabel', labelname=label) }}">
+                <div class="sidebar-item">{{ label }}</div>
+            </a>
+        {% endfor %}
+    {% endif %}
     {% if prob.source %}
-    <h3 class="sidebar-title">题目来源</h3>
-    <div class="sidebar-item">{{ prob.source.name }}</div>
+        <h3 class="sidebar-title">题目来源</h3>
+        <div class="sidebar-item">{{ prob.source.name }}</div>
     {% endif %}
     <h3 class="sidebar-title">题解来源</h3>
-    <div class="sidebar-item">{{ username }}</div>
+    <div class="sidebar-item">{{ solution.user.name }}</div>
 </div>
 <div id="bodydiv" class="bodypart">
-    <textarea id="bodytext">{{ solution }}</textarea>
+    <textarea id="bodytext">{{ solution.content }}</textarea>
 </div>
 <div id="submitdiv" class="submitpart">
     <h3>更多题解</h3>
     {% if suggested %}
         <table>
-            {% for solution in suggested %}
+            {% for solution_sug in suggested %}
                 <tr>
-                    <td>{{ solution.title }}</td>
-                    <td>by {{ solution.user.name }}</td>
+                    <td>{{ solution_sug.title }}</td>
+                    <td>by {{ solution_sug.user.name }}</td>
                 </tr>
             {% endfor %}
         </table>
@@ -42,5 +60,8 @@
     <p>暂无</p>
     {% endif %}
 </div>
-<script src="/static/md-render.js"></script>
+<script>
+    var toRender = [bodydiv];
+</script>
+<script src="{{ url_for('static', filename='md-render.js') }}"></script>
 {% endblock %}

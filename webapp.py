@@ -25,6 +25,7 @@ import csv
 import json
 import random
 import mimetypes
+from datetime import datetime
 
 from flask import Flask, Response, request, url_for
 from flask import render_template, redirect, send_file
@@ -43,6 +44,11 @@ app.secret_key = '2042090d09526f304d37c436f27a5d08'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite3'
 db = SQLAlchemy(app)
 
+
+def csv2list(csvstr):
+    return next(csv.reader((csvstr,), skipinitialspace=True))
+
+
 # =========================== 用户数据库与登录系统 ===========================
 
 login_manager = LoginManager()
@@ -58,21 +64,11 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(256), nullable=False)
     avatar = db.Column(db.LargeBinary)
     avmimetype = db.Column(db.String(64))
-    allsubs = db.relationship(
-        'Submission', backref='user', lazy=True, cascade='all, delete',
-        overlaps='user,passedsubs,triedsubs')
-    passedsubs = db.relationship(
-        'Submission', lazy=True,
-        overlaps=','.join(['user', 'allsubs', 'triedsubs']),
-        primaryjoin='and_(Submission.userid == User.uid, '
-        'Submission.ispassed == True)')
-    triedsubs = db.relationship(
-        'Submission', lazy=True,
-        overlaps=','.join(['user', 'allsubs', 'passedsubs']),
-        primaryjoin='and_(Submission.userid == User.uid, '
-        'Submission.ispassed == False)')
+    submissions = db.relationship(
+        'Submission', backref='user', lazy=True, cascade='all, delete')
     uploadedprobs = db.relationship('Prob', backref='source', lazy=True)
     solutions = db.relationship('ProbSolution', backref='user', lazy=True)
+    comments = db.relationship('Comment', backref='user', lazy=True)
 
     def verify_password(self, password):
         return False if self.password is None else \
@@ -80,6 +76,31 @@ class User(db.Model, UserMixin):
 
     def avatar_response(self):
         return Response(self.avatar, mimetype=self.avmimetype)
+
+    def edit_profile(self, name, password, avatarfile):
+        avatardata = avatarfile.read()
+        if name and name != self.name:
+            self.name = name
+        if password and not self.verify_password(password):
+            self.password = generate_password_hash(password)
+        if avatardata:
+            self.avatar = avatardata
+            self.avmimetype = mimetypes.guess_type(avatarfile.filename)[0]
+        db.session.commit()
+
+    def get_probscores(self):
+        probscores = {}
+        for submission in self.submissions:
+            prob = submission.prob
+            if prob not in probscores or prob in probscores \
+                    and probscores[prob] < submission.score:
+                probscores[prob] = submission.score
+        return probscores
+
+    def get_passedprobs(self):
+        return sorted([
+            prob for prob, score in self.get_probscores().items()
+            if score == 100])
 
     def get_id(self):
         return self.uid
@@ -90,11 +111,7 @@ def find_user(val, key='uid'):
         return None
     user = db.session.get(User, val) if key == 'uid' \
         else User.query.filter_by(**{key: val}).first()
-    return user if user is not None else None
-
-
-def csv2list(csvstr):
-    return next(csv.reader((csvstr,), skipinitialspace=True))
+    return user
 
 
 @login_manager.user_loader
@@ -112,18 +129,6 @@ def register_user(name, password, avatarfile):
         db.session.add(user)
         db.session.commit()
         return user
-
-
-def edit_user_profile(name, password, avatarfile):
-    avatardata = avatarfile.read()
-    if name and name != current_user.name:
-        current_user.name = name
-    if password and not current_user.verify_password(password):
-        current_user.password = password
-    if avatardata and avatardata != current_user.avatar:
-        current_user.avatar = avatardata
-        current_user.avmimetype = mimetypes.guess_type(avatarfile.filename)[0]
-    db.session.commit()
 
 
 def unregister_user(user):
@@ -152,11 +157,28 @@ class Prob(db.Model):
         return fpeval(answer) == fpeval(self.answer) \
             if answer and self.answer else False
 
-    def create_submission(self, user, answer):
+    def add_submission(self, user, answer):
         ispassed = self.check_answer(answer)
-        return Submission(
-            prob=self, user=user, answer=answer, ispassed=ispassed,
+        submission = Submission(
+            user=user, answer=answer, ispassed=ispassed,
             score=100 if ispassed else 0)
+        db.session.add(submission)
+        submission.prob = self
+        db.session.commit()
+        return submission
+
+    def add_comment(self, user, content, replyto=None):
+        db.session.add(Comment(
+            user=user, content=content, replyto=replyto,
+            post_type='prob', post_ident=self.probno))
+        db.session.commit()
+
+    def get_toplevel_comments(self):
+        return Comment.query.filter(and_(
+            Comment.post_type == 'prob',
+            Comment.post_ident == self.probno,
+            Comment.replyto_id.is_(None))).order_by(
+            Comment.timestamp.desc()).all()
 
     def __lt__(self, prob):
         return self.probno < prob.probno
@@ -178,12 +200,16 @@ class Submission(db.Model):
 
 class ProbSolution(db.Model):
     __tablename__ = 'solutions'
-    solutionid = db.Column(db.Integer, primary_key=True)
     probno = db.Column(
-        db.String(5), db.ForeignKey('probs.probno'), nullable=False)
+        db.String(5), db.ForeignKey('probs.probno'), primary_key=True)
+    solno = db.Column(db.Integer, primary_key=True)
     userid = db.Column(db.Integer, db.ForeignKey('users.uid'), nullable=False)
     title = db.Column(db.String(128), nullable=False)
     content = db.Column(db.Text, nullable=False)
+
+    def edit(self, title, content):
+        self.title, self.content = title, content
+        db.session.commit()
 
 
 class ProbImage(db.Model):
@@ -251,12 +277,19 @@ def add_prob(**kwargs):
     db.session.commit()
 
 
+def get_solution(probno, solno):
+    if isinstance(probno, str) and isinstance(solno, int):
+        return db.session.get(ProbSolution, (probno, solno))
+
+
 def add_solution(probno, title, content):
     prob = get_prob(probno)
     solution = ProbSolution(
-        prob=prob, user=current_user, title=title, content=content)
+        prob=prob, solno=len(prob.solutions),
+        user=current_user, title=title, content=content)
     db.session.add(solution)
     db.session.commit()
+    return solution
 
 
 def add_images(probno, imgfiles):
@@ -282,6 +315,36 @@ def add_to_label(labelname, probno):
         label = ProbLabel(labelname=labelname)
         db.session.add(label)
     label.add_prob(probno)
+
+
+# =========================== 讨论区的数据库支持 ===========================
+
+
+class Comment(db.Model):
+    __tablename__ = 'comments'
+    cmtid = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.Integer, db.ForeignKey('users.uid'))
+    content = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, default=datetime.now)
+    replyto_id = db.Column(db.Integer, db.ForeignKey('comments.cmtid'))
+    post_type = db.Column(db.String(16), nullable=False)
+    post_ident = db.Column(db.Text, nullable=False)
+    replyto = db.relationship(
+        'Comment', back_populates='replies', remote_side=[cmtid])
+    replies = db.relationship('Comment', back_populates='replyto')
+
+    def get_all_replies(self):
+        return sorted(sum(
+            [comment.get_all_replies() for comment in self.replies],
+            start=self.replies.copy()))
+
+    def __lt__(self, comment):
+        return self.timestamp < comment.timestamp
+
+
+def get_comment(cmtid):
+    if isinstance(cmtid, int):
+        return db.session.get(Comment, cmtid)
 
 
 # =========================== 题目各项网页 ===========================
@@ -317,31 +380,62 @@ def probs(probno):
     return render_template('prob.html', prob=get_prob(probno))
 
 
-@app.route('/probs/<probno>/<image>')
+@app.route('/images/<probno>/<image>')
 def imagefile(probno, image):
     return db.session.get(ProbImage, (probno, image)).to_response()
 
 
+@app.route('/probs/<probno>/post-comment', methods=['POST'])
+def post_comment(probno):
+    content = request.form.get('commenttext')
+    prob = get_prob(probno)
+    prob.add_comment(current_user, content)
+    return redirect(url_for('probs', probno=probno))
+
+
+@app.route('/probs/<probno>/post-comment/<int:cmtid>', methods=['POST'])
+def post_subcomment(probno, cmtid):
+    content = request.form.get('commenttext')
+    prob, replyto = get_prob(probno), get_comment(cmtid)
+    prob.add_comment(current_user, content, replyto)
+    return redirect(url_for('probs', probno=probno))
+
+
 @app.route('/probs/<probno>/submit', methods=['POST'])
 def submit(probno):
-    userans = request.form.get('submittext')
+    userans = request.form.get('answertext')
     prob = get_prob(probno)
-    db.session.add(prob.create_submission(current_user, userans))
-    db.session.commit()
-    result = prob.check_answer(userans)
-    return str(result)
+    submission = prob.add_submission(current_user, userans)
+    return str(submission.score)
 
 
 @app.route('/probs/<probno>/solutions/<int:solno>')
 def solutions(probno, solno):
-    prob = get_prob(probno)
+    solution = get_solution(probno, solno)
+    prob = solution.prob
     solutions = prob.solutions.copy()
-    sol = solutions.pop(solno)
-    user, soltitle, solution = sol.user, sol.title, sol.content
+    solutions.remove(solution)
     suggested = random.sample(solutions, min(len(solutions), 3))
     return render_template(
-        'solutions.html', prob=prob, username=user.name,
-        soltitle=soltitle, solution=solution, suggested=suggested)
+        'solutions.html', prob=prob, solution=solution, suggested=suggested)
+
+
+@app.route(
+    '/probs/<probno>/solutions/<int:solno>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_solution(probno, solno):
+    solution = get_solution(probno, solno)
+    if current_user != solution.user:
+        return redirect(url_for('solutions', probno=probno, solno=solno))
+    if request.method == 'POST':
+        soltitle = request.form.get('soltitle')
+        content = request.form.get('solution')
+        imgfiles = request.files.getlist('imgfiles')
+        solution.edit(soltitle, content)
+        add_images(probno, imgfiles)
+        return redirect(url_for('solutions', probno=probno, solno=solno))
+    return render_template(
+        'edit_solution.html', prob=solution.prob, solution=solution)
 
 
 @app.route('/upload-prob', methods=['GET', 'POST'])
@@ -359,7 +453,7 @@ def upload_prob():
         add_prob(
             probno=probno, probtitle=probtitle,
             problabels=json.dumps(problabels, ensure_ascii=False),
-            statement='\n' + statement, answer=answer, source=current_user)
+            statement=statement, answer=answer, source=current_user)
         add_images(probno, imgfiles)
         for labelname in problabels:
             add_to_label(labelname, probno)
@@ -372,11 +466,12 @@ def upload_prob():
 def upload_solution(probno):
     if request.method == 'POST':
         soltitle = request.form.get('soltitle')
-        solution = request.form.get('solution')
+        content = request.form.get('solution')
         imgfiles = request.files.getlist('imgfiles')
-        add_solution(probno, soltitle, '\n' + solution)
+        solution = add_solution(probno, soltitle, content)
         add_images(probno, imgfiles)
-        return redirect(url_for('home'))
+        return redirect(url_for(
+            'solutions', probno=probno, solno=solution.solno))
     return render_template('upload_solution.html', prob=get_prob(probno))
 
 
@@ -432,15 +527,16 @@ def edit_profile():
         username = request.form.get('username')
         password = request.form.get('password')
         avatar = request.files.get('avatar')
-        edit_user_profile(username, password, avatar)
+        current_user.edit_profile(username, password, avatar)
         return redirect(url_for('welcome'))
     return render_template('edit_profile.html')
 
 
-@app.route('/avatars/current')
-def avatarfile():
-    if current_user.avatar:
-        return current_user.avatar_response()
+@app.route('/avatars/<int:uid>')
+def avatarfile(uid):
+    user = find_user(uid)
+    if user.avatar:
+        return user.avatar_response()
     return send_file('static/images/avatar.svg')
 
 

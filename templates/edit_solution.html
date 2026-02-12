@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}编辑题解 - MathProbs{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='sidebar.css') }}">
+<link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='blocks.css') }}">
+<link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='formstyle.css') }}">
+{% endblock %}
+
+{% block navbar_title %}问题{{ prob.probno }} —— 编辑题解{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    <h3 class="sidebar-title">编辑题解</h3>
+    <a class="sidebar-link" href="{{ url_for('probs', probno=prob.probno) }}">
+        <div class="sidebar-item">返回题目</div>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('solutions',
+            probno=prob.probno, solno=solution.solno) }}">
+        <div class="sidebar-item">返回题解</div>
+    </a>
+    {% set problabels = jsonloads(prob.problabels) %}
+    {% if problabels %}
+        <h3 class="sidebar-title">题目标签</h3>
+        {% for label in problabels %}
+            <a class="sidebar-link" href="{{ url_for(
+                    'problistoflabel', labelname=label) }}">
+                <div class="sidebar-item">{{ label }}</div>
+            </a>
+        {% endfor %}
+    {% endif %}
+    {% if prob.source %}
+        <h3 class="sidebar-title">来源</h3>
+        <div class="sidebar-item">{{ prob.source.name }}</div>
+    {% endif %}
+</div>
+<div class="mainpart">
+    <h3>编辑题解</h3>
+    <form class="mathprobsform" method="post" action="
+            {{ url_for('edit_solution',
+                probno=prob.probno, solno=solution.solno) }}"
+            enctype="multipart/form-data">
+        <span>
+            <label for="soltitle">标题：</label>
+            <input type="text" id="soltitle" name="soltitle"
+                autocomplete="off" value="{{ solution.title }}">
+        </span>
+        <span>
+            <label for="solution">内容：</label>
+            <textarea id="solution"
+                name="solution">{{ solution.content }}</textarea>
+        </span>
+        <span>
+            <label for="imgfiles">更多图片：</label>
+            <input type="file" id="imgfiles" name="imgfiles"
+                formenctype="multipart/form-data" multiple>
+        </span>
+        <button type="submit">上传</button>
+    </form>
+</div>
+{% endblock %}

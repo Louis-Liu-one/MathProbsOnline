@@ -16,18 +16,22 @@
     <a class="sidebar-link" href="{{ url_for('edit_profile') }}">
         <div class="sidebar-item">修改简介</div>
     </a>
+    <a class="sidebar-link" href="{{ url_for('logout') }}">
+        <div class="sidebar-item">退出登录</div>
+    </a>
+    <a class="sidebar-link" href="{{ url_for('unregister') }}">
+        <div class="sidebar-item">注销账户</div>
+    </a>
 </div>
 <div class="mainpart">
     <h3>我通过的题目</h3>
-    {% set passedsubs = current_user.passedsubs.copy() %}
-    {% if passedsubs %}
-        {% if passedsubs.sort() %}{% endif %}
+    {% set passedprobs = current_user.get_passedprobs() %}
+    {% if passedprobs %}
         <table class="problist">
             <tr class="probhead">
                 <th>编号</th><th>名称</th><th>标签</th>
             </tr>
-            {% for sub in passedsubs %}
-                {% set prob = sub.prob %}
+            {% for prob in passedprobs %}
                 <tr onclick="location.href
                         = '{{ url_for('probs', probno=prob.probno) }}'">
                     <td class="probno">{{ prob.probno }}</td>
