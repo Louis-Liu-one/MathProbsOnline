@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}编辑题目 - MathProbs{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='blocks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='formstyle.css') }}">
+{% endblock %}
+
+{% block navbar_title %}问题{{ prob.probno }} —— 编辑题目{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    <h3 class="sidebar-title">编辑题目</h3>
+    <a class="sidebar-link" href="{{ url_for('probs', probno=prob.probno) }}">
+        <div class="sidebar-item">返回题目</div>
+    </a>
+    {% include "includes/problabels_sidebar.html" %}
+    {% if prob.source %}
+        <h3 class="sidebar-title">来源</h3>
+        <div class="sidebar-item">{{ prob.source.name }}</div>
+    {% endif %}
+</div>
+<div class="mainpart">
+    <h3>编辑题目</h3>
+    <form class="mathprobsform" method="post" action="
+            {{ url_for('edit_prob', probno=prob.probno) }}"
+            enctype="multipart/form-data">
+        <span>
+            <label for="probtitle">名称：</label>
+            <input type="text" id="probtitle" name="probtitle"
+                autocomplete="off" value="{{ prob.probtitle }}" required>
+        </span>
+        <span>
+            <label for="problabels">标签：</label>
+            <input type="text" id="problabels" name="problabels"
+                autocomplete="off" value="{{ list2csv(prob.as_labelnames()) }}"
+                placeholder="输入题目标签，以CSV格式">
+        </span>
+        <span>
+            <label for="statement">描述：</label>
+            <textarea id="statement" name="statement"
+                placeholder="以Markdown格式输入题面"
+                required>{{ prob.statement }}</textarea>
+        </span>
+        <span>
+            <label for="problabels">答案：</label>
+            <input type="text" id="answer" name="answer"
+                autocomplete="off" value="{{ prob.answer }}"
+                placeholder="输入答案，多个答案以逗号隔开，无答案题此项置空">
+        </span>
+        <span>
+            <label for="imgfiles">更多图片：</label>
+            <input type="file" id="imgfiles" name="imgfiles"
+                formenctype="multipart/form-data" multiple>
+        </span>
+        <span><button type="submit">上传</button></span>
+    </form>
+</div>
+{% endblock %}

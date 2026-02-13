@@ -1,0 +1,10 @@
+
+{% if prob.problabels %}
+    <h3 class="sidebar-title">题目标签</h3>
+    {% for label in prob.problabels %}
+        <a class="sidebar-link" href="{{ url_for(
+                'problistoflabel', labelname=label.labelname) }}">
+            <div class="sidebar-item">{{ label.labelname }}</div>
+        </a>
+    {% endfor %}
+{% endif %}

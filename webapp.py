@@ -21,8 +21,8 @@ Copyright (c) 2026 Louis Liu  All rights reserved.
 计划部署至：MathProbsOnline.PythonAnyWhere.com
 '''
 
+import io
 import csv
-import json
 import random
 import mimetypes
 from datetime import datetime
@@ -49,6 +49,13 @@ def csv2list(csvstr):
     return next(csv.reader((csvstr,), skipinitialspace=True))
 
 
+def list2csv(ls):
+    csvstr = io.StringIO()
+    writer = csv.writer(csvstr)
+    writer.writerow(list(ls))
+    return csvstr.getvalue().splitlines()[0]
+
+
 # =========================== 用户数据库与登录系统 ===========================
 
 login_manager = LoginManager()
@@ -65,10 +72,10 @@ class User(db.Model, UserMixin):
     avatar = db.Column(db.LargeBinary)
     avmimetype = db.Column(db.String(64))
     submissions = db.relationship(
-        'Submission', backref='user', lazy=True, cascade='all, delete')
-    uploadedprobs = db.relationship('Prob', backref='source', lazy=True)
-    solutions = db.relationship('ProbSolution', backref='user', lazy=True)
-    comments = db.relationship('Comment', backref='user', lazy=True)
+        'Submission', backref='user', cascade='all, delete')
+    uploadedprobs = db.relationship('Prob', backref='source')
+    solutions = db.relationship('ProbSolution', backref='user')
+    comments = db.relationship('Comment', backref='user')
 
     def verify_password(self, password):
         return False if self.password is None else \
@@ -140,18 +147,29 @@ def unregister_user(user):
 # =========================== 题目与图片数据库 ===========================
 
 
+prob_label = db.Table(
+    'probs_labels', db.Column(
+        'probno', db.String(16),
+        db.ForeignKey('probs.probno'), primary_key=True),
+    db.Column(
+        'labelname', db.String(16),
+        db.ForeignKey('labels.labelname'), primary_key=True))
+
+
 class Prob(db.Model):
     __tablename__ = 'probs'
-    probno = db.Column(db.String(5), primary_key=True)
+    probno = db.Column(db.String(16), primary_key=True)
     probtitle = db.Column(db.String(64))
-    problabels = db.Column(db.Text, default='[]')
+    problabels = db.relationship(
+        'ProbLabel', secondary=prob_label, back_populates='probs',
+        collection_class=set)
     statement = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text)
     solutions = db.relationship(
-        'ProbSolution', backref='prob', lazy=True, cascade='all, delete')
+        'ProbSolution', backref='prob', cascade='all, delete')
     sourceuid = db.Column(db.Integer, db.ForeignKey('users.uid'))
     submissions = db.relationship(
-        'Submission', backref='prob', lazy=True, cascade='all, delete')
+        'Submission', backref='prob', cascade='all, delete')
 
     def check_answer(self, answer):
         return fpeval(answer) == fpeval(self.answer) \
@@ -167,18 +185,24 @@ class Prob(db.Model):
         db.session.commit()
         return submission
 
-    def add_comment(self, user, content, replyto=None):
-        db.session.add(Comment(
-            user=user, content=content, replyto=replyto,
-            post_type='prob', post_ident=self.probno))
-        db.session.commit()
-
     def get_toplevel_comments(self):
         return Comment.query.filter(and_(
             Comment.post_type == 'prob',
             Comment.post_ident == self.probno,
             Comment.replyto_id.is_(None))).order_by(
             Comment.timestamp.desc()).all()
+
+    def edit(self, probtitle, problabels, statement, answer):
+        self.probtitle, self.statement, self.answer \
+            = probtitle, statement, answer
+        self.problabels = {get_label(labelname) for labelname in problabels}
+        db.session.commit()
+
+    def as_labelnames(self):
+        return {label.labelname for label in self.problabels}
+
+    def url(self):
+        return url_for('probs', probno=self.probno)
 
     def __lt__(self, prob):
         return self.probno < prob.probno
@@ -188,7 +212,7 @@ class Submission(db.Model):
     __tablename__ = 'submissions'
     submitid = db.Column(db.Integer, primary_key=True)
     probno = db.Column(
-        db.String(5), db.ForeignKey('probs.probno'), nullable=False)
+        db.String(16), db.ForeignKey('probs.probno'), nullable=False)
     userid = db.Column(db.Integer, db.ForeignKey('users.uid'), nullable=False)
     answer = db.Column(db.Text, nullable=False)
     ispassed = db.Column(db.Boolean)
@@ -201,7 +225,7 @@ class Submission(db.Model):
 class ProbSolution(db.Model):
     __tablename__ = 'solutions'
     probno = db.Column(
-        db.String(5), db.ForeignKey('probs.probno'), primary_key=True)
+        db.String(16), db.ForeignKey('probs.probno'), primary_key=True)
     solno = db.Column(db.Integer, primary_key=True)
     userid = db.Column(db.Integer, db.ForeignKey('users.uid'), nullable=False)
     title = db.Column(db.String(128), nullable=False)
@@ -214,7 +238,7 @@ class ProbSolution(db.Model):
 
 class ProbImage(db.Model):
     __tablename__ = 'images'
-    probno = db.Column(db.String(5), primary_key=True)
+    probno = db.Column(db.String(16), primary_key=True)
     name = db.Column(db.String(64), primary_key=True)
     uid = db.Column(db.Integer)
     size = db.Column(db.Integer)
@@ -228,12 +252,12 @@ class ProbImage(db.Model):
 class ProbLabel(db.Model):
     __tablename__ = 'labels'
     labelname = db.Column(db.String(16), primary_key=True)
-    probs = db.Column(db.Text, default='[]')
+    probs = db.relationship(
+        'Prob', secondary=prob_label, back_populates='problabels',
+        collection_class=set)
 
-    def add_prob(self, probno):
-        updated = set() if self.probs is None else set(json.loads(self.probs))
-        updated.add(probno)
-        self.probs = json.dumps(list(updated), ensure_ascii=False)
+    def add_prob(self, prob):
+        self.probs.add(prob)
         db.session.commit()
 
 
@@ -251,9 +275,9 @@ def search_probs(form, extra_req=None):
     if form.get('statement'):
         requirements.append(Prob.statement.like(f'%{form['statement']}%'))
     if form.get('problabels'):
-        requirements.append(or_(Prob.problabels.like(
-            f'%{problabels}%') for problabels
-                in csv2list(form['problabels'])))
+        requirements.append(or_(Prob.problabels.any(
+            ProbLabel.labelname == problabel) for problabel
+            in csv2list(form['problabels'])))
     if form.get('source'):
         source = []
         for name in csv2list(form['source']):
@@ -275,6 +299,7 @@ def add_prob(**kwargs):
     prob = Prob(**kwargs)
     db.session.add(prob)
     db.session.commit()
+    return prob
 
 
 def get_solution(probno, solno):
@@ -309,15 +334,15 @@ def get_label(labelname):
         return db.session.get(ProbLabel, labelname)
 
 
-def add_to_label(labelname, probno):
+def add_to_label(labelname, prob):
     label = get_label(labelname)
     if label is None:
         label = ProbLabel(labelname=labelname)
         db.session.add(label)
-    label.add_prob(probno)
+    label.add_prob(prob)
 
 
-# =========================== 讨论区的数据库支持 ===========================
+# =========================== 讨论区数据库支持 ===========================
 
 
 class Comment(db.Model):
@@ -327,11 +352,13 @@ class Comment(db.Model):
     content = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, default=datetime.now)
     replyto_id = db.Column(db.Integer, db.ForeignKey('comments.cmtid'))
-    post_type = db.Column(db.String(16), nullable=False)
-    post_ident = db.Column(db.Text, nullable=False)
+    # 帖子类型为'prob'，标识符为题目编号
+    post_type = db.Column(db.String(16), nullable=False)  # 帖子类型
+    post_ident = db.Column(db.Text, nullable=False)       # 帖子标识符
     replyto = db.relationship(
         'Comment', back_populates='replies', remote_side=[cmtid])
-    replies = db.relationship('Comment', back_populates='replyto')
+    replies = db.relationship(
+        'Comment', back_populates='replyto', cascade='all, delete')
 
     def get_all_replies(self):
         return sorted(sum(
@@ -345,6 +372,46 @@ class Comment(db.Model):
 def get_comment(cmtid):
     if isinstance(cmtid, int):
         return db.session.get(Comment, cmtid)
+
+
+def find_post(post_type, post_ident):
+    if post_type == 'prob':
+        return get_prob(post_ident)
+
+
+# =========================== 讨论区路由 ===========================
+
+
+@app.route('/post-comment/<post_type>/<post_ident>', methods=['POST'])
+def post_comment(post_type, post_ident):
+    content = request.form.get('commenttext')
+    db.session.add(Comment(
+        user=current_user, content=content,
+        post_type=post_type, post_ident=post_ident))
+    db.session.commit()
+    return redirect(find_post(post_type, post_ident).url())
+
+
+@app.route(
+    '/post-comment/<post_type>/<post_ident>/<int:cmtid>', methods=['POST'])
+def post_subcomment(post_type, post_ident, cmtid):
+    content = request.form.get('commenttext')
+    db.session.add(Comment(
+        user=current_user, content=content, replyto_id=cmtid,
+        post_type=post_type, post_ident=post_ident))
+    db.session.commit()
+    return redirect(find_post(post_type, post_ident).url())
+
+
+@app.route('/delete-comment', methods=['POST'])
+def delete_comment():
+    cmtid = int(request.form.get('cmtid'))
+    comment = get_comment(cmtid)
+    post = find_post(comment.post_type, comment.post_ident)
+    if comment and current_user == comment.user:
+        db.session.delete(comment)
+        db.session.commit()
+    return redirect(post.url())
 
 
 # =========================== 题目各项网页 ===========================
@@ -369,7 +436,8 @@ def problistoflabel(labelname):
         for key in (
                 'probno', 'probtitle', 'statement', 'problabels', 'source'):
             form[key] = request.form.get(key)
-    probs, query = search_probs(form, Prob.problabels.like(f'%{labelname}%'))
+    probs, query = search_probs(form, Prob.problabels.any(
+        ProbLabel.labelname == labelname))
     return render_template(
         'problist.html', labelname=labelname, oflabel=True, form=form,
         probs=probs, query=query)
@@ -382,23 +450,8 @@ def probs(probno):
 
 @app.route('/images/<probno>/<image>')
 def imagefile(probno, image):
-    return db.session.get(ProbImage, (probno, image)).to_response()
-
-
-@app.route('/probs/<probno>/post-comment', methods=['POST'])
-def post_comment(probno):
-    content = request.form.get('commenttext')
-    prob = get_prob(probno)
-    prob.add_comment(current_user, content)
-    return redirect(url_for('probs', probno=probno))
-
-
-@app.route('/probs/<probno>/post-comment/<int:cmtid>', methods=['POST'])
-def post_subcomment(probno, cmtid):
-    content = request.form.get('commenttext')
-    prob, replyto = get_prob(probno), get_comment(cmtid)
-    prob.add_comment(current_user, content, replyto)
-    return redirect(url_for('probs', probno=probno))
+    image = db.session.get(ProbImage, (probno, image))
+    return '' if image is None else image.to_response()
 
 
 @app.route('/probs/<probno>/submit', methods=['POST'])
@@ -418,6 +471,26 @@ def solutions(probno, solno):
     suggested = random.sample(solutions, min(len(solutions), 3))
     return render_template(
         'solutions.html', prob=prob, solution=solution, suggested=suggested)
+
+
+@app.route('/probs/<probno>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_prob(probno):
+    prob = get_prob(probno)
+    if current_user != prob.source:
+        return redirect(url_for('probs', probno=probno))
+    if request.method == 'POST':
+        probtitle = request.form.get('probtitle')
+        problabels = [
+            labelname.replace(' ', '')
+            for labelname in csv2list(request.form.get('problabels'))]
+        statement = request.form.get('statement')
+        answer = request.form.get('answer')
+        imgfiles = request.files.getlist('imgfiles')
+        prob.edit(probtitle, problabels, statement, answer)
+        add_images(probno, imgfiles)
+        return redirect(url_for('probs', probno=probno))
+    return render_template('edit_prob.html', prob=prob)
 
 
 @app.route(
@@ -450,13 +523,12 @@ def upload_prob():
         statement = request.form.get('statement')
         answer = request.form.get('answer')
         imgfiles = request.files.getlist('imgfiles')
-        add_prob(
+        prob = add_prob(
             probno=probno, probtitle=probtitle,
-            problabels=json.dumps(problabels, ensure_ascii=False),
             statement=statement, answer=answer, source=current_user)
         add_images(probno, imgfiles)
         for labelname in problabels:
-            add_to_label(labelname, probno)
+            add_to_label(labelname, prob)
         return redirect(url_for('probs', probno=probno))
     return render_template('upload_prob.html')
 
@@ -535,7 +607,7 @@ def edit_profile():
 @app.route('/avatars/<int:uid>')
 def avatarfile(uid):
     user = find_user(uid)
-    if user.avatar:
+    if user and user.avatar:
         return user.avatar_response()
     return send_file('static/images/avatar.svg')
 
@@ -555,7 +627,7 @@ def unregister():
     return redirect(url_for('home'))
 
 
-app.add_template_global(json.loads, 'jsonloads')
+app.add_template_global(list2csv, 'list2csv')
 with app.app_context():
     db.create_all()
 

@@ -1,0 +1,88 @@
+{#
+    要使用*讨论区*功能，需要：
+    1. 在模板开头引入`comment.html`，需要`with context`以使用`current_user`：
+    ```
+    {% from "includes/comment.html" import commentarea with context %}
+    ```
+    2. 要在头部引入`static/delete-comment.js`以使用删除功能；
+    3. 要在结尾引入`static/cmtform-onclick.js`以使用回复功能；
+    4. 要将`document.getElementsByClassName('commentcontent')`中所有元素包含于`toRender`列表中以使用Markdown渲染。
+#}
+
+{% macro commentform_main(post_type, post_ident) %}
+    <form id="commentform" method="POST"
+        action="{{ url_for('post_comment',
+            post_type=post_type, post_ident=post_ident) }}">
+        <textarea name="commenttext" class="submittext"
+            placeholder="发表见解" rows="6"></textarea>
+        <button class="submitbutton" type="submit">发表</button>
+    </form>
+{% endmacro %}
+
+{% macro commentform_sub(comment) %}
+<form id="subcommentform" method="POST" action="{{ url_for('post_subcomment',
+        post_type=comment.post_type, post_ident=comment.post_ident,
+        cmtid=comment.cmtid) }}">
+    <textarea name="commenttext" class="submittext"
+        placeholder="发表评论" rows="6"></textarea>
+    <button class="submitbutton" type="submit">发表</button>
+</form>
+{% endmacro %}
+
+{% macro commentbody(comment, toplevel=False, secondlevel=False) %}
+<div class="commentbody">
+    <p class="commentname">
+        {% if comment.user %}{{ comment.user.name }}{% else %}未知用户{% endif %}
+        {% if not toplevel and not secondlevel %}
+            &#9654; 
+            {% if comment.replyto.user %}{{ comment.replyto.user.name }}
+            {% else %}未知用户{% endif %}
+        {% endif %}
+    </p>
+    <div class="commentcontent">
+        <textarea>{{ comment.content }}</textarea>
+    </div>
+    <p class="commentfoot">
+        {{ comment.timestamp.strftime('%Y-%m-%d %H:%M') }}
+        <img id="commentbutton"
+            src="{{ url_for('static', filename='images/comment.svg') }}">
+        {% if current_user == comment.user %}
+            <img id="deletebutton"
+                src="{{ url_for('static', filename='images/delete.svg') }}"
+                onclick="deleteComment(
+                    '{{ url_for('delete_comment') }}', '{{ comment.cmtid }}')">
+        {% endif %}
+    </p>
+    {{ commentform_sub(comment) }}
+    {% if toplevel %}
+        {% for subcomment in comment.get_all_replies() %}
+            {{ commentdiv(subcomment,
+                secondlevel=subcomment.replyto == comment) }}
+        {% endfor %}
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro commentdiv(comment, toplevel=False, secondlevel=False) %}
+<div class="comment">
+    <span class="avatar">
+        <img class="avatar" alt="avatar"
+            src="{% if comment.user %}
+                {{ url_for('avatarfile', uid=comment.user.uid) }}
+            {% else %}{{ url_for('avatarfile', uid=0) }}{% endif %}">
+    </span>
+    {{ commentbody(comment, toplevel, secondlevel) }}
+</div>
+{% endmacro %}
+
+{% macro commentarea(post_type, post_ident, comments) %}
+    {{ commentform_main(post_type, post_ident) }}
+    <div class="commentlist">
+        {% if comments %}
+            {% for comment in comments %}
+                {{ commentdiv(comment, toplevel=True) }}
+                <div class="commentsep"></div>
+            {% endfor %}
+        {% else %}暂无讨论{% endif %}
+    </div>
+{% endmacro %}

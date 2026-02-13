@@ -3,10 +3,10 @@
 {% block title %}题集{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" type="text/css" href="/static/sidebar.css">
-<link rel="stylesheet" type="text/css" href="/static/blocks.css">
-<link rel="stylesheet" type="text/css" href="/static/problist.css">
-<link rel="stylesheet" type="text/css" href="/static/formstyle.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='blocks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='problist.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='formstyle.css') }}">
 {% endblock %}
 
 {% block navbar_title %}
@@ -56,10 +56,11 @@
                     <td class="probno">{{ prob.probno }}</td>
                     <td class="probtitle">{{ prob.probtitle }}</td>
                     <td class="problabels">
-                        {% for problabel in jsonloads(prob.problabels) %}
+                        {% for problabel in prob.problabels %}
                             <a class="problabel" href="{{ url_for(
-                                'problistoflabel', labelname=problabel) }}">
-                                {{ problabel }}
+                                'problistoflabel',
+                                labelname=problabel.labelname) }}">
+                                {{ problabel.labelname }}
                             </a>
                         {% endfor %}
                     </td>

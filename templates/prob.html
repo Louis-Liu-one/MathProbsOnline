@@ -1,30 +1,26 @@
 {% extends "base.html" %}
+{% from "includes/comment.html" import commentarea with context %}
 
 {% block title %}问题{{ prob.probno }} - MathProbs{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" type="text/css"
-    href="{{ url_for('static', filename='sidebar.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ url_for('static', filename='blocks.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ url_for('static', filename='comment.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='blocks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='comment.css') }}">
+<script src="{{ url_for('static', filename='delete-comment.js') }}"></script>
 {% endblock %}
 
 {% block navbar_title %}问题{{ prob.probno }} {{ prob.probtitle }}{% endblock %}
 
 {% block body %}
 <div class="sidebar">
-    {% set problabels = jsonloads(prob.problabels) %}
-    {% if problabels %}
-        <h3 class="sidebar-title">题目标签</h3>
-        {% for label in problabels %}
-            <a class="sidebar-link" href="{{ url_for(
-                    'problistoflabel', labelname=label) }}">
-                <div class="sidebar-item">{{ label }}</div>
-            </a>
-        {% endfor %}
+    {% if current_user == prob.source %}
+        <a class="sidebar-link"
+                href="{{ url_for('edit_prob', probno=prob.probno) }}">
+            <div class="sidebar-item">编辑题目</div>
+        </a>
     {% endif %}
+    {% include "includes/problabels_sidebar.html" %}
     {% if prob.source %}
         <h3 class="sidebar-title">来源</h3>
         <div class="sidebar-item">{{ prob.source.name }}</div>
@@ -42,108 +38,10 @@
         <button class="submitbutton" type="submit">提交</button>
     </form>
     <h3>讨论区</h3>
-    <form id="commentform" method="POST"
-        action="{{ url_for('post_comment', probno=prob.probno) }}">
-        <textarea name="commenttext" class="submittext"
-            placeholder="发表见解" rows="6"></textarea>
-        <button class="submitbutton" type="submit">发表</button>
-    </form>
-    <div class="commentlist">
-        {% set comments = prob.get_toplevel_comments() %}
-        {% if comments %}
-            {% for comment in comments %}
-                <div class="comment">
-                    <span class="avatar">
-                        <img class="avatar" alt="avatar"
-                            src="{{ url_for('avatarfile',
-                                uid=comment.user.uid) }}">
-                    </span>
-                    <div class="commentbody">
-                        <p class="commentname">{{ comment.user.name }}</p>
-                        <div class="commentcontent">
-                            <textarea>{{ comment.content }}</textarea>
-                        </div>
-                        <p class="commentfoot">
-                            {{ comment.timestamp.strftime('%Y-%m-%d %H:%M') }}
-                            <img src="{{ url_for('static',
-                                filename='images/comment.svg') }}"
-                                id="commentbutton">
-                        </p>
-                        <form id="subcommentform" method="POST"
-                                action="{{ url_for('post_subcomment',
-                                    probno=prob.probno,
-                                    cmtid=comment.cmtid) }}">
-                            <textarea name="commenttext" class="submittext"
-                                placeholder="发表评论" rows="6"></textarea>
-                            <button class="submitbutton" type="submit">
-                                发表
-                            </button>
-                        </form>
-                        {% for subcomment in comment.get_all_replies() %}
-                            <div class="comment">
-                                <span class="avatar">
-                                    <img class="avatar" alt="avatar"
-                                        src="{{ url_for('avatarfile',
-                                            uid=subcomment.user.uid) }}">
-                                </span>
-                                <div class="commentbody">
-                                    <p class="commentname">
-                                        {{ subcomment.user.name }}
-                                        {% if subcomment.replyto != comment %}
-                                            &#9654; {{ subcomment.replyto
-                                                .user.name }}
-                                        {% endif %}
-                                    </p>
-                                    <div class="commentcontent">
-                                        <textarea>
-                                            {{ subcomment.content }}
-                                        </textarea>
-                                    </div>
-                                    <p class="commentfoot">
-                                        {{ subcomment.timestamp.strftime(
-                                            '%Y-%m-%d %H:%M') }}
-                                        <img src="{{ url_for('static',
-                                            filename='images/comment.svg') }}"
-                                            id="commentbutton">
-                                    </p>
-                                    <form id="subcommentform" method="POST"
-                                            action="{{
-                                                url_for('post_subcomment',
-                                                probno=prob.probno,
-                                                cmtid=subcomment.cmtid) }}">
-                                        <textarea name="commenttext"
-                                            class="submittext"
-                                            placeholder="发表评论"
-                                            rows="6"></textarea>
-                                        <button class="submitbutton"
-                                            type="submit">发表</button>
-                                    </form>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="commentsep"></div>
-            {% endfor %}
-        {% else %}暂无讨论{% endif %}
-    </div>
+    {{ commentarea("prob", prob.probno, prob.get_toplevel_comments()) }}
 </div>
+<script src="{{ url_for('static', filename='cmtform-onclick.js') }}"></script>
 <script>
-    try {
-        if (commentbutton.length === undefined) {
-            commentbutton = [commentbutton];
-            subcommentform = [subcommentform];
-        }
-        for (let i = 0; i < commentbutton.length; i++) {
-            commentbutton[i].addEventListener('click', function (event) {
-                if (subcommentform[i].style.display != 'inline')
-                    subcommentform[i].style.display = 'inline';
-                else subcommentform[i].style.display = 'none';
-            });
-        }
-    } catch (e) {
-        console.log(e);  // when commentbutton is not defined
-    }
     var toRender = [
         bodydiv, ...document.getElementsByClassName('commentcontent')];
 </script>

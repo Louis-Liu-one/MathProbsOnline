@@ -3,9 +3,9 @@
 {% block title %}欢迎{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" type="text/css" href="/static/sidebar.css">
-<link rel="stylesheet" type="text/css" href="/static/blocks.css">
-<link rel="stylesheet" type="text/css" href="/static/problist.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='blocks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='problist.css') }}">
 {% endblock %}
 
 {% block navbar_title %}我的主页{% endblock %}
@@ -37,10 +37,11 @@
                     <td class="probno">{{ prob.probno }}</td>
                     <td>{{ prob.probtitle }}</td>
                     <td class="problabels">
-                        {% for problabel in jsonloads(prob.problabels) %}
+                        {% for problabel in prob.problabels %}
                             <a class="problabel" href="{{ url_for(
-                                'problistoflabel', labelname=problabel) }}">
-                                {{ problabel }}
+                                'problistoflabel',
+                                labelname=problabel.labelname) }}">
+                                {{ problabel.labelname }}
                             </a>
                         {% endfor %}
                     </td>
@@ -62,10 +63,11 @@
                     <td class="probno">{{ prob.probno }}</td>
                     <td>{{ prob.probtitle }}</td>
                     <td class="problabels">
-                        {% for problabel in jsonloads(prob.problabels) %}
+                        {% for problabel in prob.problabels %}
                             <a class="problabel" href="{{ url_for(
-                                'problistoflabel', labelname=problabel) }}">
-                                {{ problabel }}
+                                'problistoflabel',
+                                labelname=problabel.labelname) }}">
+                                {{ problabel.labelname }}
                             </a>
                         {% endfor %}
                     </td>
