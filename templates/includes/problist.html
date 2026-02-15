@@ -1,0 +1,32 @@
+{% from "includes/problabels.html" import problabels_problist %}
+{% from "includes/users.html" import user_avatar, user_name %}
+
+{% macro problist(probs, with_source=True) %}
+    <table class="problist">
+        <tr class="probhead">
+            <th>编号</th><th>名称</th><th>标签</th>
+            {% if with_source %}<th>来源</th>{% endif %}
+        </tr>
+        {% for prob in probs %}
+            <tr onclick="location.href
+                    = '{{ url_for('probs', probno=prob.probno) }}'">
+                <td class="probno">{{ prob.probno }}</td>
+                <td class="probtitle">{{ prob.probtitle }}</td>
+                {{ problabels_problist(prob) }}
+                {% if with_source %}
+                    <td class="source" {% if prob.source %}
+                        onclick="event.stopPropagation();
+                            location.href
+                            = '{{ url_for('users', uid=prob.source.uid) }}'"
+                            {% endif %}>
+                        <div>
+                            <img
+                                src="{{ user_avatar(prob.source, black=True) }}">
+                            {{ user_name(prob.source) }}
+                        </div>
+                    </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
+{% endmacro %}

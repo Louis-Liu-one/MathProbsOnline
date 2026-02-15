@@ -8,6 +8,7 @@
     3. 要在结尾引入`static/cmtform-onclick.js`以使用回复功能；
     4. 要将`document.getElementsByClassName('commentcontent')`中所有元素包含于`toRender`列表中以使用Markdown渲染。
 #}
+{% from "includes/users.html" import user_name, user_avatar %}
 
 {% macro commentform_main(post_type, post_ident) %}
     <form id="commentform" method="POST"
@@ -32,11 +33,9 @@
 {% macro commentbody(comment, toplevel=False, secondlevel=False) %}
 <div class="commentbody">
     <p class="commentname">
-        {% if comment.user %}{{ comment.user.name }}{% else %}未知用户{% endif %}
+        {{ user_name(comment.user) }}
         {% if not toplevel and not secondlevel %}
-            &#9654; 
-            {% if comment.replyto.user %}{{ comment.replyto.user.name }}
-            {% else %}未知用户{% endif %}
+            &#9654; {{ user_name(comment.replyto.user) }}
         {% endif %}
     </p>
     <div class="commentcontent">
@@ -65,11 +64,10 @@
 
 {% macro commentdiv(comment, toplevel=False, secondlevel=False) %}
 <div class="comment">
-    <span class="avatar">
+    <span class="avatar" {% if comment.user %} onclick="location.href
+            = '{{ url_for('users', uid=comment.user.uid) }}'" {% endif %}>
         <img class="avatar" alt="avatar"
-            src="{% if comment.user %}
-                {{ url_for('avatarfile', uid=comment.user.uid) }}
-            {% else %}{{ url_for('avatarfile', uid=0) }}{% endif %}">
+            src="{{ user_avatar(comment.user, black=True) }}">
     </span>
     {{ commentbody(comment, toplevel, secondlevel) }}
 </div>

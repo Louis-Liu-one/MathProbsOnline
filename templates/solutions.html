@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% from "includes/problabels.html" import problabels_sidebar %}
+{% from "includes/users.html" import user_sidebar %}
 {% from "includes/comment.html" import commentarea with context %}
 
 {% block title %}问题{{ prob.probno }}的题解 - MathProbs{% endblock %}
@@ -6,32 +8,35 @@
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='blocks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='problist.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='comment.css') }}">
 <script src="{{ url_for('static', filename='delete-comment.js') }}"></script>
 {% endblock %}
 
 {% block navbar_title %}
-{{ prob.probno }}的题解 —— {{ solution.title }}
+问题{{ prob.probno }} —— 题解：{{ solution.title }}
 {% endblock %}
 
 {% block body %}
 <div class="sidebar">
     <a class="sidebar-link" href="{{ url_for('probs', probno=prob.probno) }}">
-        <div class="sidebar-item">返回题目</div>
+        <div class="sidebar-item">
+            <img src="{{ url_for('static', filename='images/return.svg') }}">
+            返回题目
+        </div>
     </a>
     {% if current_user == solution.user %}
         <a class="sidebar-link" href="{{ url_for('edit_solution',
                 probno=prob.probno, solno=solution.solno) }}">
-            <div class="sidebar-item">编辑题解</div>
+            <div class="sidebar-item">
+                <img src="{{ url_for('static', filename='images/edit.svg') }}">
+                编辑题解
+            </div>
         </a>
     {% endif %}
-    {% include "includes/problabels_sidebar.html" %}
-    {% if prob.source %}
-        <h3 class="sidebar-title">题目来源</h3>
-        <div class="sidebar-item">{{ prob.source.name }}</div>
-    {% endif %}
-    <h3 class="sidebar-title">题解来源</h3>
-    <div class="sidebar-item">{{ solution.user.name }}</div>
+    {{ problabels_sidebar(prob) }}
+    <h3 class="sidebar-title">题目来源</h3>{{ user_sidebar(prob.source) }}
+    <h3 class="sidebar-title">题解来源</h3>{{ user_sidebar(solution.user) }}
 </div>
 <div id="bodydiv" class="bodypart">
     <textarea id="bodytext">{{ solution.content }}</textarea>
@@ -39,17 +44,19 @@
 <div id="submitdiv" class="submitpart">
     <h3>更多题解</h3>
     {% if suggested %}
-        <table>
+        <table class="problist">
             {% for solution_sug in suggested %}
-                <tr>
+                <tr onclick="location.href = '{{ url_for('solutions',
+                            probno=prob.probno, solno=solution_sug.solno) }}'">
                     <td>{{ solution_sug.title }}</td>
-                    <td>by {{ solution_sug.user.name }}</td>
+                    <td style="width: 40%">{{ solution_sug.user.name }}</td>
                 </tr>
             {% endfor %}
         </table>
-    {% else %}
-    <p>暂无</p>
-    {% endif %}
+    {% else %}<p>暂无</p>{% endif %}
+    <h3>讨论区</h3>
+    {{ commentarea('solution', solution.get_post_ident(),
+        solution.get_toplevel_comments()) }}
 </div>
 <script src="{{ url_for('static', filename='cmtform-onclick.js') }}"></script>
 <script>

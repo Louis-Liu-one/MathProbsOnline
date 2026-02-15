@@ -1,6 +1,10 @@
 {% extends "base.html" %}
+{% from "includes/problist.html" import problist %}
 
-{% block title %}欢迎{% endblock %}
+{% block title %}
+    {% if current_user == user %}我{% else %}{{ user.name }}{% endif %}的主页
+     - MathProbs
+{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
@@ -8,72 +12,49 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='problist.css') }}">
 {% endblock %}
 
-{% block navbar_title %}我的主页{% endblock %}
+{% block navbar_title %}
+    <img class="avatar" src="{{ url_for('avatarfile', uid=user.uid) }}">
+    {% if current_user == user %}我{% else %}{{ user.name }}{% endif %}的主页
+{% endblock %}
 
 {% block body %}
 <div class="sidebar">
     <h3 class="sidebar-title">欢迎来到MathProbsOnline</h3>
-    <a class="sidebar-link" href="{{ url_for('edit_profile') }}">
-        <div class="sidebar-item">修改简介</div>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('logout') }}">
-        <div class="sidebar-item">退出登录</div>
-    </a>
-    <a class="sidebar-link" href="{{ url_for('unregister') }}">
-        <div class="sidebar-item">注销账户</div>
-    </a>
+    {% if current_user == user %}
+        <a class="sidebar-link" href="{{ url_for('edit_profile') }}">
+            <div class="sidebar-item">
+                <img src="{{ url_for('static', filename='images/edit.svg') }}">
+                修改简介
+            </div>
+        </a>
+        <a class="sidebar-link" href="{{ url_for('logout') }}">
+            <div class="sidebar-item">
+                <img src="{{ url_for('static', filename='images/logout.svg') }}">
+                退出登录
+            </div>
+        </a>
+        <a class="sidebar-link" href="{{ url_for('unregister') }}">
+            <div class="sidebar-item">
+                <img src="{{ url_for('static',
+                    filename='images/unregister.svg') }}">
+                注销账户
+            </div>
+        </a>
+    {% endif %}
 </div>
 <div class="mainpart">
-    <h3>我通过的题目</h3>
-    {% set passedprobs = current_user.get_passedprobs() %}
+    <h3>{%- if current_user == user -%}我
+        {%- else -%}{{ user.name }}{%- endif -%}通过的题目</h3>
+    {% set passedprobs = user.get_passedprobs() %}
     {% if passedprobs %}
-        <table class="problist">
-            <tr class="probhead">
-                <th>编号</th><th>名称</th><th>标签</th>
-            </tr>
-            {% for prob in passedprobs %}
-                <tr onclick="location.href
-                        = '{{ url_for('probs', probno=prob.probno) }}'">
-                    <td class="probno">{{ prob.probno }}</td>
-                    <td>{{ prob.probtitle }}</td>
-                    <td class="problabels">
-                        {% for problabel in prob.problabels %}
-                            <a class="problabel" href="{{ url_for(
-                                'problistoflabel',
-                                labelname=problabel.labelname) }}">
-                                {{ problabel.labelname }}
-                            </a>
-                        {% endfor %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </table>
+        {{ problist(passedprobs, with_source=False) }}
     {% else %}<p>暂无</p>{% endif %}
-    <h3>我上传的题目</h3>
-    {% set uploadedprobs = current_user.uploadedprobs.copy() %}
+    <h3>{%- if current_user == user -%}我
+        {%- else -%}{{ user.name }}{%- endif -%}上传的题目</h3>
+    {% set uploadedprobs = user.uploadedprobs.copy() %}
     {% if uploadedprobs %}
-        {% if uploadedprobs.sort() %}{% endif %}
-        <table class="problist">
-            <tr class="probhead">
-                <th>编号</th><th>名称</th><th>标签</th>
-            </tr>
-            {% for prob in uploadedprobs %}
-                <tr onclick="location.href
-                        = '{{ url_for('probs', probno=prob.probno) }}'">
-                    <td class="probno">{{ prob.probno }}</td>
-                    <td>{{ prob.probtitle }}</td>
-                    <td class="problabels">
-                        {% for problabel in prob.problabels %}
-                            <a class="problabel" href="{{ url_for(
-                                'problistoflabel',
-                                labelname=problabel.labelname) }}">
-                                {{ problabel.labelname }}
-                            </a>
-                        {% endfor %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </table>
+        {% do uploadedprobs.sort() %}
+        {{ problist(uploadedprobs, with_source=False) }}
     {% else %}<p>暂无</p>{% endif %}
 </div>
 {% endblock %}

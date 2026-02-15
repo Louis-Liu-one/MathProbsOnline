@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}未找到页面 - MathProbs{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='blocks.css') }}">
+{% endblock %}
+
+{% block navbar_title %}未找到页面{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    <h3 class="sidebar-title">欢迎来到MathProbsOnline</h3>
+</div>
+<div class="mainpart">
+    <h3>未找到页面</h3>
+    <p><strong>发生错误：</strong>{{ error }}</p>
+</div>
+{% endblock %}

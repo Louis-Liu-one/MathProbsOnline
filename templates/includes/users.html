@@ -1,0 +1,26 @@
+
+{% macro user_avatar(user, black=False) %}
+    {% if user and black %}
+        {{ url_for('avatarfile_black', uid=user.uid) }}
+    {% elif user %}
+        {{ url_for('avatarfile', uid=user.uid) }}
+    {% elif black %}
+        {{ url_for('avatarfile_black', uid=0) }}
+    {% else %}
+        {{ url_for('avatarfile', uid=0) }}
+    {% endif %}
+{% endmacro %}
+
+{% macro user_name(user) %}
+    {% if user %}{{ user.name }}{% else %}未知用户{% endif %}
+{% endmacro %}
+
+{% macro user_sidebar(user) %}
+    <a class="sidebar-link" {% if user %}
+            href="{{ url_for('users', uid=user.uid) }}" {% endif %}>
+        <div class="sidebar-item">
+            <img class="avatar" src="{{ user_avatar(user) }}">
+            {{ user_name(user) }}
+        </div>
+    </a>
+{% endmacro %}

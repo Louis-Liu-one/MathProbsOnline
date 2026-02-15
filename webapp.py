@@ -172,7 +172,7 @@ class Prob(db.Model):
         'Submission', backref='prob', cascade='all, delete')
 
     def check_answer(self, answer):
-        return fpeval(answer) == fpeval(self.answer) \
+        return fpeval(answer).do() == fpeval(self.answer).do() \
             if answer and self.answer else False
 
     def add_submission(self, user, answer):
@@ -187,8 +187,7 @@ class Prob(db.Model):
 
     def get_toplevel_comments(self):
         return Comment.query.filter(and_(
-            Comment.post_type == 'prob',
-            Comment.post_ident == self.probno,
+            Comment.post_type == 'prob', Comment.post_ident == self.probno,
             Comment.replyto_id.is_(None))).order_by(
             Comment.timestamp.desc()).all()
 
@@ -230,6 +229,19 @@ class ProbSolution(db.Model):
     userid = db.Column(db.Integer, db.ForeignKey('users.uid'), nullable=False)
     title = db.Column(db.String(128), nullable=False)
     content = db.Column(db.Text, nullable=False)
+
+    def url(self):
+        return url_for('solutions', probno=self.probno, solno=self.solno)
+
+    def get_post_ident(self):
+        return list2csv([self.probno, self.solno])
+
+    def get_toplevel_comments(self):
+        post_ident = self.get_post_ident()
+        return Comment.query.filter(and_(
+            Comment.post_type == 'solution', Comment.post_ident == post_ident,
+            Comment.replyto_id.is_(None))).order_by(
+            Comment.timestamp.desc()).all()
 
     def edit(self, title, content):
         self.title, self.content = title, content
@@ -353,6 +365,7 @@ class Comment(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.now)
     replyto_id = db.Column(db.Integer, db.ForeignKey('comments.cmtid'))
     # 帖子类型为'prob'，标识符为题目编号
+    # 帖子类型为'solution'，标识符为CSV格式的题目编号与题解编号的组合
     post_type = db.Column(db.String(16), nullable=False)  # 帖子类型
     post_ident = db.Column(db.Text, nullable=False)       # 帖子标识符
     replyto = db.relationship(
@@ -377,6 +390,9 @@ def get_comment(cmtid):
 def find_post(post_type, post_ident):
     if post_type == 'prob':
         return get_prob(post_ident)
+    elif post_type == 'solution':
+        probno, solno = csv2list(post_ident)
+        return get_solution(probno, int(solno))
 
 
 # =========================== 讨论区路由 ===========================
@@ -445,7 +461,10 @@ def problistoflabel(labelname):
 
 @app.route('/probs/<probno>')
 def probs(probno):
-    return render_template('prob.html', prob=get_prob(probno))
+    prob = get_prob(probno)
+    if prob:
+        return render_template('prob.html', prob=prob)
+    return render_template('notfound.html', error='未能找到题目。')
 
 
 @app.route('/images/<probno>/<image>')
@@ -465,6 +484,8 @@ def submit(probno):
 @app.route('/probs/<probno>/solutions/<int:solno>')
 def solutions(probno, solno):
     solution = get_solution(probno, solno)
+    if not solution:
+        return render_template('notfound.html', error='未能找到题解。')
     prob = solution.prob
     solutions = prob.solutions.copy()
     solutions.remove(solution)
@@ -477,6 +498,8 @@ def solutions(probno, solno):
 @login_required
 def edit_prob(probno):
     prob = get_prob(probno)
+    if not prob:
+        return render_template('notfound.html', error='未能找到题目。')
     if current_user != prob.source:
         return redirect(url_for('probs', probno=probno))
     if request.method == 'POST':
@@ -498,6 +521,8 @@ def edit_prob(probno):
 @login_required
 def edit_solution(probno, solno):
     solution = get_solution(probno, solno)
+    if not solution:
+        return render_template('notfound.html', error='未能找到题解。')
     if current_user != solution.user:
         return redirect(url_for('solutions', probno=probno, solno=solno))
     if request.method == 'POST':
@@ -536,6 +561,9 @@ def upload_prob():
 @app.route('/probs/<probno>/upload-solution', methods=['GET', 'POST'])
 @login_required
 def upload_solution(probno):
+    prob = get_prob(probno)
+    if not prob:
+        return render_template('notfound.html', error='未能找到题目。')
     if request.method == 'POST':
         soltitle = request.form.get('soltitle')
         content = request.form.get('solution')
@@ -589,7 +617,15 @@ def register():
 @app.route('/welcome')
 @login_required
 def welcome():
-    return render_template('welcome.html')
+    return render_template('welcome.html', user=current_user)
+
+
+@app.route('/users/<int:uid>')
+def users(uid):
+    user = find_user(uid)
+    if user:
+        return render_template('welcome.html', user=find_user(uid))
+    return render_template('notfound.html', error='未能找到用户。')
 
 
 @app.route('/edit-profile', methods=['GET', 'POST'])
@@ -612,6 +648,14 @@ def avatarfile(uid):
     return send_file('static/images/avatar.svg')
 
 
+@app.route('/avatars/<int:uid>/black')
+def avatarfile_black(uid):
+    user = find_user(uid)
+    if user and user.avatar:
+        return user.avatar_response()
+    return send_file('static/images/avatar-black.svg')
+
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -627,6 +671,7 @@ def unregister():
     return redirect(url_for('home'))
 
 
+app.jinja_env.add_extension('jinja2.ext.do')
 app.add_template_global(list2csv, 'list2csv')
 with app.app_context():
     db.create_all()

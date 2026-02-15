@@ -7,7 +7,15 @@ div.commentlist {
         span.avatar, img.avatar {
             width: 36px;
             height: 36px;
-            margin-top: 8px;
+            margin-top: 2px;
+        }
+        img.avatar {
+            border-radius: 50%;
+            border: 2px solid transparent;
+        }
+        img.avatar:hover {
+            border: 2px solid lightblue;
+            cursor: pointer;
         }
         div.commentbody {
             float: right;
@@ -26,7 +34,7 @@ div.commentlist {
                     height: 18px;
                 }
                 img:hover {
-                    background-color: rgb(92, 203, 226);
+                    background-color: lightblue;
                     border-radius: 50%;
                     cursor: pointer;
                 }

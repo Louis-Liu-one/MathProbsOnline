@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% from "includes/problabels.html" import problabels_sidebar %}
+{% from "includes/users.html" import user_sidebar %}
 {% from "includes/comment.html" import commentarea with context %}
 
 {% block title %}问题{{ prob.probno }} - MathProbs{% endblock %}
@@ -17,14 +19,14 @@
     {% if current_user == prob.source %}
         <a class="sidebar-link"
                 href="{{ url_for('edit_prob', probno=prob.probno) }}">
-            <div class="sidebar-item">编辑题目</div>
+            <div class="sidebar-item">
+                <img src="{{ url_for('static', filename='images/edit.svg') }}">
+                编辑题目
+            </div>
         </a>
     {% endif %}
-    {% include "includes/problabels_sidebar.html" %}
-    {% if prob.source %}
-        <h3 class="sidebar-title">来源</h3>
-        <div class="sidebar-item">{{ prob.source.name }}</div>
-    {% endif %}
+    {{ problabels_sidebar(prob) }}
+    <h3 class="sidebar-title">题目来源</h3>{{ user_sidebar(prob.source) }}
 </div>
 <div id="bodydiv" class="bodypart">
     <textarea id="bodytext">{{ prob.statement }}</textarea>
@@ -38,7 +40,7 @@
         <button class="submitbutton" type="submit">提交</button>
     </form>
     <h3>讨论区</h3>
-    {{ commentarea("prob", prob.probno, prob.get_toplevel_comments()) }}
+    {{ commentarea('prob', prob.probno, prob.get_toplevel_comments()) }}
 </div>
 <script src="{{ url_for('static', filename='cmtform-onclick.js') }}"></script>
 <script>

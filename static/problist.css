@@ -29,6 +29,17 @@ table.problist {
     }
     td.source {
         width: 15%;
+        div {
+            display: flex;
+            align-items: center;
+            img {
+                height: 25px;
+                margin-right: 5px;
+            }
+        }
+    }
+    td.source:hover {
+        background-color: skyblue;
     }
     a.problabel {
         text-decoration: none;

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "includes/problist.html" import problist %}
 
 {% block title %}题集{% endblock %}
 
@@ -45,29 +46,6 @@
         <button type="submit">查询</button>
     </form>
     <h3>{% if query %}满足条件的{% else %}所有{% endif %}题目</h3>
-    {% if probs.first() %}
-        <table class="problist">
-            <tr class="probhead">
-                <th>编号</th><th>名称</th><th>标签</th><th>来源</th>
-            </tr>
-            {% for prob in probs %}
-                <tr onclick="location.href
-                        = '{{ url_for('probs', probno=prob.probno) }}'">
-                    <td class="probno">{{ prob.probno }}</td>
-                    <td class="probtitle">{{ prob.probtitle }}</td>
-                    <td class="problabels">
-                        {% for problabel in prob.problabels %}
-                            <a class="problabel" href="{{ url_for(
-                                'problistoflabel',
-                                labelname=problabel.labelname) }}">
-                                {{ problabel.labelname }}
-                            </a>
-                        {% endfor %}
-                    </td>
-                    <td class="source">{{ prob.source.name }}</td>
-                </tr>
-            {% endfor %}
-        </table>
-    {% else %}<p>暂无</p>{% endif %}
+    {% if probs.first() %}{{ problist(probs) }}{% else %}<p>暂无</p>{% endif %}
 </div>
 {% endblock %}

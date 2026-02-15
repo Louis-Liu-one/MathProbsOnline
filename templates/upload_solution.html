@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% from "includes/problabels.html" import problabels_sidebar %}
+{% from "includes/users.html" import user_sidebar %}
 
 {% block title %}上传题解 - MathProbs{% endblock %}
 
@@ -12,15 +14,12 @@
 
 {% block body %}
 <div class="sidebar">
-    <h3 class="sidebar-title">上传题解</h3>
     <a class="sidebar-link" href="{{ url_for('probs', probno=prob.probno) }}">
         <div class="sidebar-item">返回题目</div>
     </a>
-    {% include "includes/problabels_sidebar.html" %}
-    {% if prob.source %}
-        <h3 class="sidebar-title">来源</h3>
-        <div class="sidebar-item">{{ prob.source.name }}</div>
-    {% endif %}
+    {{ problabels_sidebar(prob) }}
+    <h3 class="sidebar-title">题目来源</h3>
+    {{ user_sidebar(prob.source) }}
 </div>
 <div class="mainpart">
     <h3>上传题解</h3>
