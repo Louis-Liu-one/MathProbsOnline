@@ -32,8 +32,6 @@ from flask import render_template, redirect, send_file
 from flask_login import LoginManager, UserMixin, current_user
 from flask_login import login_required, login_user, logout_user
 from flask_sqlalchemy import SQLAlchemy
-
-from sqlalchemy import and_, or_
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from fpevaluator import fpeval
@@ -186,7 +184,7 @@ class Prob(db.Model):
         return submission
 
     def get_toplevel_comments(self):
-        return Comment.query.filter(and_(
+        return Comment.query.filter(db.and_(
             Comment.post_type == 'prob', Comment.post_ident == self.probno,
             Comment.replyto_id.is_(None))).order_by(
             Comment.timestamp.desc()).all()
@@ -238,7 +236,7 @@ class ProbSolution(db.Model):
 
     def get_toplevel_comments(self):
         post_ident = self.get_post_ident()
-        return Comment.query.filter(and_(
+        return Comment.query.filter(db.and_(
             Comment.post_type == 'solution', Comment.post_ident == post_ident,
             Comment.replyto_id.is_(None))).order_by(
             Comment.timestamp.desc()).all()
@@ -287,7 +285,7 @@ def search_probs(form, extra_req=None):
     if form.get('statement'):
         requirements.append(Prob.statement.like(f'%{form['statement']}%'))
     if form.get('problabels'):
-        requirements.append(or_(Prob.problabels.any(
+        requirements.append(db.or_(Prob.problabels.any(
             ProbLabel.labelname == problabel) for problabel
             in csv2list(form['problabels'])))
     if form.get('source'):
@@ -297,13 +295,13 @@ def search_probs(form, extra_req=None):
             if user:
                 source.append(user)
         if source:
-            requirements.append(or_(Prob.source == user for user in source))
+            requirements.append(db.or_(Prob.source == user for user in source))
     flag = bool(requirements)
     if extra_req is not None:
         requirements.append(extra_req)
     if not requirements:
         return Prob.query.order_by(Prob.probno.asc()), flag
-    return Prob.query.filter(and_(*requirements)).order_by(
+    return Prob.query.filter(db.and_(*requirements)).order_by(
         Prob.probno.asc()), flag
 
 
