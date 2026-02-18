@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "includes/problabels.html" import problabels_sidebar %}
+{% from "includes/sidebar.html" import return2post, delete_prob %}
 
 {% block title %}编辑题目 - MathProbs{% endblock %}
 
@@ -13,12 +14,8 @@
 
 {% block body %}
 <div class="sidebar">
-    <a class="sidebar-link" href="{{ url_for('probs', probno=prob.probno) }}">
-        <div class="sidebar-item">
-            <img src="{{ url_for('static', filename='images/return.svg') }}">
-            返回题目
-        </div>
-    </a>
+    {{ return2post(prob, "返回题目") }}
+    {{ delete_prob(prob) }}
     {{ problabels_sidebar(prob) }}
 <div class="mainpart">
     <h3>编辑题目</h3>

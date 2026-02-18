@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "includes/problabels.html" import problabels_sidebar %}
+{% from "includes/solutionlist.html" import solutionlist %}
+{% from "includes/users.html" import user_name, user_sidebar %}
+
+{% block title %}问题{{ prob.probno }}的提交 - MathProbs{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='blocks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='problist.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='submit.css') }}">
+{% endblock %}
+
+{% block navbar_title %}问题{{ prob.probno }} —— 我的提交{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    {{ problabels_sidebar(prob) }}
+    <h3 class="sidebar-title">题目来源</h3>{{ user_sidebar(prob.source) }}
+</div>
+<div class="bodypart">
+    <h3>提交状态</h3>
+    <div class="tpstatus">
+        {% for status in testpoints %}
+            {% if status == TPStatus.CORRECT %}
+                <img title="答案正确"
+                    src="{{ url_for('static', filename='images/correct.svg') }}">
+            {% elif status == TPStatus.INCORRECT %}
+                <img title="答案错误"
+                    src="{{ url_for('static', filename='images/incorrect.svg') }}">
+            {% elif status == TPStatus.PARSEERR %}
+                <img title="解析错误"
+                    src="{{ url_for('static', filename='images/error.svg') }}">
+            {% elif status == TPStatus.EVALERR %}
+                <img title="求值错误"
+                    src="{{ url_for('static', filename='images/error.svg') }}">
+            {% elif status == TPStatus.TIMEOUT %}
+                <img title="超时错误"
+                    src="{{ url_for('static', filename='images/timeout.svg') }}">
+            {% elif status == TPStatus.ANSERR %}
+                <img title="题目提供的答案无法解析，请联系提供者{{- user_name(prob.source) -}}"
+                    src="{{ url_for('static', filename='images/error.svg') }}">
+            {% endif %}
+        {% endfor %}
+    </div>
+    <h3>我的答案</h3>
+    <pre>{{ submission.answer }}</pre>
+    <div id="answerdiv">
+        <textarea id="answertext">**求值结果：**
+            {% if answer_latex %}${{ answer_latex }}$
+            {% else %}无法求值{% endif %}
+        </textarea>
+    </div>
+</div>
+<div class="submitpart">
+    <h3>查看题解</h3>
+    {{ solutionlist(prob.solutions) }}
+</div>
+<script>
+    toRender = [answerdiv];
+</script>
+<script src="{{ url_for('static', filename='md-render.js') }}"></script>
+{% endblock %}

@@ -11,9 +11,9 @@
     {% endif %}
 {% endmacro %}
 
-{% macro user_name(user) %}
+{%- macro user_name(user) -%}
     {% if user %}{{ user.name }}{% else %}未知用户{% endif %}
-{% endmacro %}
+{%- endmacro -%}
 
 {% macro user_sidebar(user) %}
     <a class="sidebar-link" {% if user %}

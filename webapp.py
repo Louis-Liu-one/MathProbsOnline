@@ -23,6 +23,7 @@ Copyright (c) 2026 Louis Liu  All rights reserved.
 
 import io
 import csv
+import json
 import random
 import mimetypes
 from datetime import datetime
@@ -34,7 +35,7 @@ from flask_login import login_required, login_user, logout_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from fpevaluator import fpeval
+from anschecker import TPStatus, check_answers, testpoints_passedlist, latex
 
 
 app = Flask(__name__)
@@ -169,19 +170,27 @@ class Prob(db.Model):
     submissions = db.relationship(
         'Submission', backref='prob', cascade='all, delete')
 
-    def check_answer(self, answer):
-        return fpeval(answer).do() == fpeval(self.answer).do() \
-            if answer and self.answer else False
+    def get_answer(self):
+        if not self.answer:
+            return []
+        answer = json.loads(self.answer)
+        if not isinstance(answer, list):
+            answer = [[{}, answer]]
+        return answer
+
+    def check_answers(self, userans):
+        return check_answers(self.get_answer(), userans)
 
     def add_submission(self, user, answer):
-        ispassed = self.check_answer(answer)
+        answer_eval, testpoints = self.check_answers(answer)
+        passedlist = testpoints_passedlist(testpoints)
         submission = Submission(
-            user=user, answer=answer, ispassed=ispassed,
-            score=100 if ispassed else 0)
+            user=user, answer=answer, ispassed=all(passedlist),
+            score=100 * sum(passedlist) // len(passedlist))
         db.session.add(submission)
         submission.prob = self
         db.session.commit()
-        return submission
+        return answer_eval, testpoints, submission
 
     def get_toplevel_comments(self):
         return Comment.query.filter(db.and_(
@@ -473,10 +482,16 @@ def imagefile(probno, image):
 
 @app.route('/probs/<probno>/submit', methods=['POST'])
 def submit(probno):
-    userans = request.form.get('answertext')
+    answer = request.form.get('answertext')
     prob = get_prob(probno)
-    submission = prob.add_submission(current_user, userans)
-    return str(submission.score)
+    if not prob:
+        return render_template('notfound.html', error='未能找到题目。')
+    answer_eval, testpoints, submission = prob.add_submission(
+        current_user, answer)
+    return render_template(
+        'submit.html',
+        answer_latex=latex(answer_eval) if answer_eval else None,
+        prob=prob, submission=submission, testpoints=testpoints)
 
 
 @app.route('/probs/<probno>/solutions/<int:solno>')
@@ -571,6 +586,32 @@ def upload_solution(probno):
         return redirect(url_for(
             'solutions', probno=probno, solno=solution.solno))
     return render_template('upload_solution.html', prob=get_prob(probno))
+
+
+@app.route('/probs/<probno>/delete')
+@login_required
+def delete_prob(probno):
+    prob = get_prob(probno)
+    if not prob:
+        return render_template('notfound.html', error='未能找到题目。')
+    if current_user == prob.source:
+        db.session.delete(prob)
+        db.session.commit()
+        return redirect(url_for('welcome'))
+    return redirect(url_for('probs', probno=probno))
+
+
+@app.route('/probs/<probno>/solutions/<int:solno>/delete')
+@login_required
+def delete_solution(probno, solno):
+    solution = get_solution(probno, solno)
+    if not solution:
+        return render_template('notfound.html', error='未能找到题解。')
+    if current_user == solution.user:
+        db.session.delete(solution)
+        db.session.commit()
+        return redirect(url_for('probs', probno=probno))
+    return redirect(url_for('solutions', probno=probno, solno=solno))
 
 
 # =========================== 登录系统网页 ===========================
@@ -671,6 +712,7 @@ def unregister():
 
 app.jinja_env.add_extension('jinja2.ext.do')
 app.add_template_global(list2csv, 'list2csv')
+app.add_template_global(TPStatus, 'TPStatus')
 with app.app_context():
     db.create_all()
 

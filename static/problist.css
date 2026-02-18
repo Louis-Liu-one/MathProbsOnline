@@ -29,16 +29,19 @@ table.problist {
     }
     td.source {
         width: 15%;
-        div {
-            display: flex;
-            align-items: center;
-            img {
-                height: 25px;
-                margin-right: 5px;
-            }
+    }
+    td.soluser {
+        width: 40%;
+    }
+    td.source div, td.soluser div {
+        display: flex;
+        align-items: center;
+        img {
+            height: 25px;
+            margin-right: 5px;
         }
     }
-    td.source:hover {
+    td.source:hover, td.soluser:hover {
         background-color: skyblue;
     }
     a.problabel {

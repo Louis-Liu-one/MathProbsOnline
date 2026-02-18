@@ -21,12 +21,15 @@ div.mainpart {
 div.bodypart {
     left: 16%;
     width: 45%;
-    display: none;
     padding-left: 8px;
     padding-right: 8px;
     img {
         width: 100%;
     }
+}
+
+div#bodydiv {
+    display: none;
 }
 
 div.submitpart {

@@ -20,8 +20,8 @@
                             = '{{ url_for('users', uid=prob.source.uid) }}'"
                             {% endif %}>
                         <div>
-                            <img
-                                src="{{ user_avatar(prob.source, black=True) }}">
+                            <img src="{{ user_avatar(
+                                prob.source, black=True) }}">
                             {{ user_name(prob.source) }}
                         </div>
                     </td>

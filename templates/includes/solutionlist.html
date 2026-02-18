@@ -1,0 +1,21 @@
+{% from "includes/users.html" import user_avatar, user_name %}
+
+{% macro solutionlist(solutions) %}
+    {% if solutions %}
+        <table class="problist">
+            {% for solution in solutions %}
+                <tr onclick="location.href = '{{ url_for('solutions',
+                            probno=solution.probno, solno=solution.solno) }}'">
+                    <td>{{ solution.title }}</td>
+                    <td class="soluser">
+                        <div>
+                            <img src="{{ user_avatar(
+                                solution.user, black=True) }}">
+                            {{ user_name(solution.user) }}
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}<p>暂无</p>{% endif %}
+{% endmacro %}

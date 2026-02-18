@@ -2,6 +2,7 @@
 {% from "includes/problabels.html" import problabels_sidebar %}
 {% from "includes/users.html" import user_sidebar %}
 {% from "includes/comment.html" import commentarea with context %}
+{% from "includes/sidebar.html" import edit_prob, delete_prob, view_solution %}
 
 {% block title %}问题{{ prob.probno }} - MathProbs{% endblock %}
 
@@ -17,14 +18,10 @@
 {% block body %}
 <div class="sidebar">
     {% if current_user == prob.source %}
-        <a class="sidebar-link"
-                href="{{ url_for('edit_prob', probno=prob.probno) }}">
-            <div class="sidebar-item">
-                <img src="{{ url_for('static', filename='images/edit.svg') }}">
-                编辑题目
-            </div>
-        </a>
+        {{ edit_prob(prob) }}
+        {{ delete_prob(prob) }}
     {% endif %}
+    {{ view_solution(prob) }}
     {{ problabels_sidebar(prob) }}
     <h3 class="sidebar-title">题目来源</h3>{{ user_sidebar(prob.source) }}
 </div>
