@@ -15,6 +15,7 @@
 </div>
 <div class="mainpart">
     <h3>未找到页面</h3>
+    <img src="{{ url_for('static', filename='images/incorrect.svg') }}">
     <p><strong>发生错误：</strong>{{ error }}</p>
 </div>
 {% endblock %}

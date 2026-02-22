@@ -26,16 +26,18 @@
     <form class="mathprobsform" method="post" action="
             {{ url_for('upload_solution', probno=prob.probno) }}"
             enctype="multipart/form-data">
+        {% if error %}<p class="errormsg">错误：{{ error }}</p>{% endif %}
         <span>
             <label for="soltitle">标题：</label>
             <input type="text" id="soltitle" name="soltitle"
-                autocomplete="off" spellcheck="false" required>
+                autocomplete="off" spellcheck="false" required
+                {% if soltitle %}value="{{ soltitle }}"{% endif %}>
         </span>
         <span>
             <label for="solution">内容：</label>
             <textarea id="solution" name="solution"
-                placeholder="以Markdown格式输入题解"
-                spellcheck="false" required></textarea>
+                placeholder="以Markdown格式输入题解" spellcheck="false"
+                required>{% if content %}{{ content }}{% endif %}</textarea>
         </span>
         <span>
             <label for="imgfiles">图片：</label>
@@ -48,6 +50,7 @@
             <button type="submit">上传</button>
         </span>
     </form>
+    <h3>预览区</h3>
     <div class="mdpreview" id="mdpreview"></div>
 </div>
 {% endblock %}

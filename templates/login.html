@@ -1,25 +1,31 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>用户登录</title>
-</head>
-<body>
-    <h2>请登录</h2>
-    {% if error %}
-        <p style="color: red;"><strong>错误：</strong> {{ error }}</p>
-    {% endif %}
-    <form method="post" action="/login">
-        <div>
-            <label for="username">用户名：</label><br>
-            <input type="text" id="username" name="username" required>
-        </div>
-        <div>
-            <label for="password">密码：</label><br>
-            <input type="password" id="password" name="password" required>
-        </div>
-        <div>
-            <button type="submit">登录</button>
-        </div>
-    </form>
-</body>
-</html>
+{% extends "form.html" %}
+
+{% block title %}登录 - MathProbs{% endblock %}
+
+{% block form %}
+<form class="mathprobsform" action="{{ url_for('login') }}" method="post">
+    <h3>登录</h3>
+    {% if error %}<p class="errormsg">错误：{{ error }}</p>{% endif %}
+    <span>
+        <label for="username">用户名：</label>
+        <input id="username" name="username" type="text"
+            spellcheck="false" placeholder="请输入用户名"
+            autocomplete="username" required>
+    </span>
+    <span>
+        <label for="password">密码：</label>
+        <input id="password" name="password" type="password"
+            spellcheck="false" placeholder="请输入密码"
+            autocomplete="current-password" required>
+    </span>
+    <span><button type="submit">登录</button></span>
+</form>
+{% endblock %}
+
+{% block right_block %}
+<h2>没有账号？</h2>
+<p>立即注册</p>
+<a href="{{ url_for('register') }}">
+    <button class="register" type="button">注册</button>
+</a>
+{% endblock %}

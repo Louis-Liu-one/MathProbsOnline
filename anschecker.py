@@ -1,7 +1,8 @@
 
 import enum
+from sympy import latex, Array, Expr
 from func_timeout import func_timeout, FunctionTimedOut
-from fpevaluator import latex, fpparse, fpeval, ParseException
+from fpevaluator import fpparse, fpeval, ParseException
 
 __all__ = [
     'TPStatus', 'check_answer', 'check_answers',
@@ -16,6 +17,15 @@ class TPStatus(enum.Enum):
     EVALERR = 4
     TIMEOUT = 5
     ANSERR = 6
+
+
+def _judge_equal(expr1, expr2):
+    if isinstance(expr1, Array) and isinstance(expr2, Array):
+        return expr1.shape == expr2.shape and all(
+            _judge_equal(expr1[i], expr2[i]) for i in range(expr1.shape[0]))
+    elif isinstance(expr1, Expr) and isinstance(expr2, Expr):
+        return expr1.equals(expr2)
+    return False
 
 
 def fpparse_with_timeout(answer):
@@ -36,8 +46,8 @@ def check_answer(answer, userans_parsed, context=None):
         return TPStatus.ANSERR
     try:
         userans_eval = fpeval_with_timeout(userans_parsed, context)
-        return TPStatus.CORRECT if answer_eval.equals(
-            userans_eval) else TPStatus.INCORRECT
+        return TPStatus.CORRECT if _judge_equal(
+            answer_eval, userans_eval) else TPStatus.INCORRECT
     except FunctionTimedOut:
         return TPStatus.TIMEOUT
     except ParseException:

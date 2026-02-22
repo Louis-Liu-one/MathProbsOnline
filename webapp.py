@@ -8,15 +8,22 @@ Copyright (c) 2026 Louis Liu  All rights reserved.
 /unregister   注销
 /edit-profile 编辑个人简介
 /users/<uid>  查看他人主页
+/post-comment/<post_type>/<post_ident>         发表评论
+/post-comment/<post_type>/<post_ident>/<cmtid> 回复评论
+/delete-comment                                删除评论
 
 题目：
-/probs                          题集
-/upload-prob                    上传题目
+/upload-prob         上传题目
+/labels/<labelname>  题目标签
+/probs               题集
 /probs/<probno>                 题目<probno>
 /probs/<probno>/submit          提交题目<probno>的答案
-/probs/<probno>/solutions/<no>  查看题解
+/probs/<probno>/edit            编辑题目
+/probs/<probno>/delete          删除题目
 /probs/<probno>/upload-solution 上传题解
-/labels/<labelname>             题目标签
+/probs/<probno>/solutions/<solno>        查看题解
+/probs/<probno>/solutions/<solno>/edit   编辑题解
+/probs/<probno>/solutions/<solno>/delete 删除题解
 
 计划部署至：MathProbsOnline.PythonAnyWhere.com
 '''
@@ -83,7 +90,15 @@ class User(db.Model, UserMixin):
     def avatar_response(self):
         return Response(self.avatar, mimetype=self.avmimetype)
 
-    def edit_profile(self, name, password, avatarfile):
+    def edit_profile(self, name, password, confirmpassword, avatarfile):
+        user_exists = db.session.query(
+            User.query.filter_by(name=name).exists()).scalar()
+        if name != self.name and user_exists:
+            return '用户名与其他用户重复。'
+        elif password != confirmpassword:
+            return '密码与确认密码不一致。'
+        elif not name:
+            return '用户名不能为空。'
         avatardata = avatarfile.read()
         if name and name != self.name:
             self.name = name
@@ -128,8 +143,10 @@ def load_user(uid):
     return find_user(uid)
 
 
-def register_user(name, password, avatarfile):
-    if name and password:
+def register_user(name, password, confirmpassword, avatarfile):
+    user_exists = db.session.query(
+        User.query.filter_by(name=name).exists()).scalar()
+    if name and password and not user_exists and password == confirmpassword:
         user = User(
             name=name, password=generate_password_hash(password))
         if avatarfile is not None:
@@ -137,7 +154,13 @@ def register_user(name, password, avatarfile):
             user.avmimetype = mimetypes.guess_type(avatarfile.filename)[0]
         db.session.add(user)
         db.session.commit()
-        return user
+        return True, user
+    elif password != confirmpassword:
+        return False, '密码与确认密码不一致。'
+    elif user_exists:
+        return False, '用户名与其他用户重复。'
+    else:
+        return False, '账户创建失败。'
 
 
 def unregister_user(user):
@@ -203,8 +226,11 @@ class Prob(db.Model):
             Comment.timestamp.desc()).all()
 
     def edit(self, probtitle, problabels, statement, answer):
-        self.probtitle, self.statement, self.answer \
-            = probtitle, statement, answer
+        if probtitle:
+            self.probtitle = probtitle
+        if statement:
+            self.statement = statement
+        self.answer = answer
         self.problabels = {get_label(labelname) for labelname in problabels}
         db.session.commit()
 
@@ -255,7 +281,10 @@ class ProbSolution(db.Model):
             Comment.timestamp.desc()).all()
 
     def edit(self, title, content):
-        self.title, self.content = title, content
+        if title:
+            self.title = title
+        if content:
+            self.content = content
         db.session.commit()
 
     def __lt__(self, solution):
@@ -286,6 +315,9 @@ class ProbLabel(db.Model):
         self.probs.add(prob)
         db.session.commit()
 
+    def url(self):
+        return url_for('problistoflabel', labelname=self.labelname)
+
 
 def get_prob(probno):
     if isinstance(probno, str):
@@ -311,7 +343,8 @@ def search_probs(form, extra_req=None):
             if user:
                 source.append(user)
         if source:
-            requirements.append(db.or_(Prob.source == user for user in source))
+            requirements.append(db.or_(
+                Prob.source == user for user in source))
     flag = bool(requirements)
     if extra_req is not None:
         requirements.append(extra_req)
@@ -322,10 +355,19 @@ def search_probs(form, extra_req=None):
 
 
 def add_prob(**kwargs):
+    probno = kwargs.get('probno')
+    probtitle = kwargs.get('probtitle')
+    statement = kwargs.get('statement')
+    if not probtitle:
+        return False, '题目标题不能为空。'
+    elif not statement:
+        return False, '题目描述不能为空。'
+    elif get_prob(probno) is not None:
+        return False, f'以{probno}为编号的题目已存在。'
     prob = Prob(**kwargs)
     db.session.add(prob)
     db.session.commit()
-    return prob
+    return True, prob
 
 
 def get_solution(probno, solno):
@@ -334,16 +376,25 @@ def get_solution(probno, solno):
 
 
 def add_solution(probno, title, content):
+    if not title:
+        return False, '题解标题不能为空。'
+    elif not content:
+        return False, '题解内容不能为空。'
     prob = get_prob(probno)
+    if not prob:
+        return False, '未能找到题目。'
     solution = ProbSolution(
         prob=prob, solno=len(prob.solutions),
         user=current_user, title=title, content=content)
     db.session.add(solution)
     db.session.commit()
-    return solution
+    return True, solution
 
 
 def add_images(probno, imgfiles):
+    for imgfile in imgfiles:
+        if db.session.get(ProbImage, (probno, imgfile.filename)) is not None:
+            return '文件名与已有文件重复。'
     for imgfile in imgfiles:
         imgdata = imgfile.read()
         if len(imgdata):
@@ -413,6 +464,7 @@ def find_post(post_type, post_ident):
 
 
 @app.route('/post-comment/<post_type>/<post_ident>', methods=['POST'])
+@login_required
 def post_comment(post_type, post_ident):
     content = request.form.get('commenttext')
     db.session.add(Comment(
@@ -424,6 +476,7 @@ def post_comment(post_type, post_ident):
 
 @app.route(
     '/post-comment/<post_type>/<post_ident>/<int:cmtid>', methods=['POST'])
+@login_required
 def post_subcomment(post_type, post_ident, cmtid):
     content = request.form.get('commenttext')
     db.session.add(Comment(
@@ -434,6 +487,7 @@ def post_subcomment(post_type, post_ident, cmtid):
 
 
 @app.route('/delete-comment', methods=['POST'])
+@login_required
 def delete_comment():
     cmtid = int(request.form.get('cmtid'))
     comment = get_comment(cmtid)
@@ -459,6 +513,11 @@ def problist():
         'problist.html', probs=probs, query=query, form=form)
 
 
+@app.route('/labels')
+def labellist():
+    return render_template('labellist.html', labels=ProbLabel.query.all())
+
+
 @app.route('/labels/<labelname>', methods=['GET', 'POST'])
 def problistoflabel(labelname):
     form = {}
@@ -481,13 +540,14 @@ def probs(probno):
     return render_template('notfound.html', error='未能找到题目。')
 
 
-@app.route('/images/<probno>/<image>')
-def imagefile(probno, image):
-    image = db.session.get(ProbImage, (probno, image))
+@app.route('/images/<probno>/<imagename>')
+def imagefile(probno, imagename):
+    image = db.session.get(ProbImage, (probno, imagename))
     return '' if image is None else image.to_response()
 
 
 @app.route('/probs/<probno>/submit', methods=['POST'])
+@login_required
 def submit(probno):
     answer = request.form.get('answertext')
     prob = get_prob(probno)
@@ -521,7 +581,7 @@ def edit_prob(probno):
     if not prob:
         return render_template('notfound.html', error='未能找到题目。')
     if current_user != prob.source:
-        return redirect(url_for('probs', probno=probno))
+        return redirect(prob.url())
     if request.method == 'POST':
         probtitle = request.form.get('probtitle')
         problabels = [
@@ -530,9 +590,11 @@ def edit_prob(probno):
         statement = request.form.get('statement')
         answers = request.form.get('answers')
         imgfiles = request.files.getlist('imgfiles')
+        error = add_images(probno, imgfiles)
+        if error is not None:
+            return render_template('edit_prob.html', prob=prob, error=error)
         prob.edit(probtitle, problabels, statement, answers)
-        add_images(probno, imgfiles)
-        return redirect(url_for('probs', probno=probno))
+        return redirect(prob.url())
     return render_template('edit_prob.html', prob=prob)
 
 
@@ -544,14 +606,18 @@ def edit_solution(probno, solno):
     if not solution:
         return render_template('notfound.html', error='未能找到题解。')
     if current_user != solution.user:
-        return redirect(url_for('solutions', probno=probno, solno=solno))
+        return redirect(solution.url())
     if request.method == 'POST':
         soltitle = request.form.get('soltitle')
         content = request.form.get('solution')
         imgfiles = request.files.getlist('imgfiles')
+        error = add_images(probno, imgfiles)
+        if error is not None:
+            return render_template(
+                'edit_solution.html',
+                prob=solution.prob, solution=solution, error=error)
         solution.edit(soltitle, content)
-        add_images(probno, imgfiles)
-        return redirect(url_for('solutions', probno=probno, solno=solno))
+        return redirect(solution.url())
     return render_template(
         'edit_solution.html', prob=solution.prob, solution=solution)
 
@@ -568,14 +634,23 @@ def upload_prob():
         statement = request.form.get('statement')
         answers = request.form.get('answers')
         imgfiles = request.files.getlist('imgfiles')
-        print(answers)
-        prob = add_prob(
+        error = add_images(probno, imgfiles)
+        if error is not None:
+            return render_template(
+                'upload_prob.html', probno=probno, probtitle=probtitle,
+                problabels=request.form.get('problabels'),
+                statement=statement, answers=answers, error=error)
+        status, prob = add_prob(
             probno=probno, probtitle=probtitle,
             statement=statement, answer=answers, source=current_user)
-        add_images(probno, imgfiles)
+        if not status:
+            return render_template(
+                'upload_prob.html', probno=probno, probtitle=probtitle,
+                problabels=request.form.get('problabels'),
+                statement=statement, answers=answers, error=prob)
         for labelname in problabels:
             add_to_label(labelname, prob)
-        return redirect(url_for('probs', probno=probno))
+        return redirect(prob.url())
     return render_template('upload_prob.html')
 
 
@@ -589,11 +664,18 @@ def upload_solution(probno):
         soltitle = request.form.get('soltitle')
         content = request.form.get('solution')
         imgfiles = request.files.getlist('imgfiles')
-        solution = add_solution(probno, soltitle, content)
-        add_images(probno, imgfiles)
-        return redirect(url_for(
-            'solutions', probno=probno, solno=solution.solno))
-    return render_template('upload_solution.html', prob=get_prob(probno))
+        error = add_images(probno, imgfiles)
+        if error is not None:
+            return render_template(
+                'upload_solution.html', prob=prob,
+                soltitle=soltitle, content=content, error=error)
+        status, solution = add_solution(probno, soltitle, content)
+        if not status:
+            return render_template(
+                'upload_solution.html', prob=prob,
+                soltitle=soltitle, content=content, error=solution)
+        return redirect(solution.url())
+    return render_template('upload_solution.html', prob=prob)
 
 
 @app.route('/probs/<probno>/delete')
@@ -607,7 +689,7 @@ def delete_prob(probno):
         db.session.delete(prob)
         db.session.commit()
         return redirect(url_for('welcome'))
-    return redirect(url_for('probs', probno=probno))
+    return redirect(prob.url())
 
 
 @app.route('/probs/<probno>/solutions/<int:solno>/delete')
@@ -620,7 +702,7 @@ def delete_solution(probno, solno):
         db.session.delete(solution)
         db.session.commit()
         return redirect(url_for('probs', probno=probno))
-    return redirect(url_for('solutions', probno=probno, solno=solno))
+    return redirect(solution.url())
 
 
 # =========================== 登录系统网页 ===========================
@@ -642,7 +724,7 @@ def login():
             login_user(user, remember=True)
             return redirect(url_for('welcome'))
         else:
-            error = '用户名或密码错误'
+            error = '用户名或密码错误。'
     return render_template('login.html', error=error)
 
 
@@ -652,13 +734,14 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        confirmpassword = request.form.get('confirmpassword')
         avatar = request.files.get('avatar')
-        user = register_user(username, password, avatar)
-        if user is not None:
+        status, user = register_user(
+            username, password, confirmpassword, avatar)
+        if status:
             login_user(user, remember=True)
             return redirect(url_for('welcome'))
-        else:
-            error = '账户创建失败'
+        error = user
     return render_template('register.html', error=error)
 
 
@@ -679,13 +762,17 @@ def users(uid):
 @app.route('/edit-profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
+    error = None
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        confirmpassword = request.form.get('confirmpassword')
         avatar = request.files.get('avatar')
-        current_user.edit_profile(username, password, avatar)
-        return redirect(url_for('welcome'))
-    return render_template('edit_profile.html')
+        error = current_user.edit_profile(
+            username, password, confirmpassword, avatar)
+        if error is None:
+            return redirect(url_for('welcome'))
+    return render_template('edit_profile.html', error=error)
 
 
 @app.route('/avatars/<int:uid>')

@@ -25,6 +25,7 @@
     <form class="mathprobsform" id="editform" method="post"
             action="{{ url_for('edit_prob', probno=prob.probno) }}"
             enctype="multipart/form-data">
+        {% if error %}<p class="errormsg">错误：{{ error }}</p>{% endif %}
         <span>
             <label for="probtitle">名称：</label>
             <input type="text" id="probtitle" name="probtitle"
@@ -49,7 +50,7 @@
                 <div class="answer-input">
                     <input type="text" id="context" name="context"
                         autocomplete="off" spellcheck="false" 
-                        placeholder="以JSON格式输入各变量，无变量则此项填{}">
+                        placeholder="以JSON格式输入各变量，无变量则此项置空或填{}">
                     <input type="text" id="answer" name="answer"
                         autocomplete="off" spellcheck="false"
                         placeholder="输入答案">
@@ -71,6 +72,7 @@
             <button onclick="submitFormWithAnswers();">上传</button>
         </span>
     </form>
+    <h3>预览区</h3>
     <div class="mdpreview" id="mdpreview"></div>
 </div>
 <script>

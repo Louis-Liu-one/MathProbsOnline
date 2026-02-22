@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='blocks.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='formstyle.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='md-preview.css') }}">
+<script src="{{ url_for('static', filename='md-render.js') }}"></script>
 <script src="{{ url_for('static', filename='edit-prob.js') }}"></script>
 {% endblock %}
 
@@ -20,26 +22,31 @@
     <h3>上传题目</h3>
     <form class="mathprobsform" id="editform" method="post"
         action="{{ url_for('upload_prob') }}" enctype="multipart/form-data">
+        {% if error %}<p class="errormsg">错误：{{ error }}</p>{% endif %}
         <span>
             <label for="probno">编号：</label>
             <input type="text" id="probno" name="probno"
-                autocomplete="off" spellcheck="false" required>
+                autocomplete="off" spellcheck="false" required
+                {% if probno %}value="{{ probno }}"{% endif %}>
         </span>
         <span>
             <label for="probtitle">名称：</label>
             <input type="text" id="probtitle" name="probtitle"
-                autocomplete="off" spellcheck="false" required>
+                autocomplete="off" spellcheck="false" required
+                {% if probtitle %}value="{{ probtitle }}"{% endif %}>
         </span>
         <span>
             <label for="problabels">标签：</label>
             <input type="text" id="problabels" name="problabels"
                 autocomplete="off" spellcheck="false"
-                placeholder="输入题目标签，以CSV格式">
+                placeholder="输入题目标签，以CSV格式"
+                {% if problabels %}value="{{ problabels }}"{% endif %}>
         </span>
         <span>
             <label for="statement">描述：</label>
             <textarea id="statement" name="statement" spellcheck="false" 
-                placeholder="以Markdown格式输入题面" required></textarea>
+                placeholder="以Markdown格式输入题面"
+                required>{% if statement %}{{ statement }}{% endif %}</textarea>
         </span>
         <span>
             <label for="answer">答案：</label>
@@ -47,7 +54,7 @@
                 <div class="answer-input">
                     <input type="text" id="context" name="context"
                         autocomplete="off" spellcheck="false" 
-                        placeholder="以JSON格式输入各变量，无变量则此项填{}">
+                        placeholder="以JSON格式输入各变量，无变量则此项置空或填{}">
                     <input type="text" id="answer" name="answer"
                         autocomplete="off" spellcheck="false"
                         placeholder="输入答案">
@@ -63,10 +70,17 @@
             <input type="file" id="imgfiles" name="imgfiles"
                 formenctype="multipart/form-data" accept="image/*" multiple>
         </span>
-        <span><button onclick="submitFormWithAnswers();">上传</button></span>
+        <span>
+            <button type="button" onclick="renderElement(
+                mdpreview, statement.value, 'block');">预览</button>
+            <button onclick="submitFormWithAnswers();">上传</button>
+        </span>
     </form>
+    <h3>预览区</h3>
+    <div class="mdpreview" id="mdpreview"></div>
 </div>
 <script>
     var imageMinus = '{{ url_for('static', filename='images/minus.svg') }}';
+    {% if answers %}addAnswersBefore({{ answers }});{% endif %}
 </script>
 {% endblock %}

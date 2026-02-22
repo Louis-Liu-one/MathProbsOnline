@@ -4,10 +4,14 @@ form.mathprobsform {
     border-radius: 10px;
     border-collapse: collapse;
     padding: 10px 15px 10px 10px;
+    p.errormsg {
+        color: #DC143C;
+    }
     span {
         display: flex;
         justify-content: right;
         width: 100%;
+        max-width: 100%;
         padding: 5px 3px;
         white-space: nowrap;
         div.answer {
@@ -60,6 +64,7 @@ form.mathprobsform {
     }
     input, textarea {
         flex-grow: 1;
+        min-width: 0;
         font-family: Andale Mono;
         font-size: 15px;
         padding: 5px 10px;
@@ -70,7 +75,6 @@ form.mathprobsform {
     }
     textarea {
         min-width: 80%;
-        max-width: 93%;
         min-height: 50px;
         height: 150px;
     }

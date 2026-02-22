@@ -19,7 +19,6 @@ indent = functools.partial(indent, prefix='    ')  # 调试用
 
 _function_type = type | types.FunctionType | types.MethodType \
     | types.MethodDescriptorType | sp.FunctionClass
-latex = sp.latex
 ParserElement.enable_packrat()
 
 
@@ -151,6 +150,12 @@ class ProgramStack:
         if len(self.stack) == 1:
             raise IndexError('cannot pop the main context')
         return self.stack.pop()
+
+
+class FPSliceList:
+
+    def __init__(self, slices):
+        self.slices = tuple(slices)
 
 
 class FPElement:
@@ -431,8 +436,11 @@ _as_term = functools.partial(
 _as_factor = functools.partial(_process_unops, specprocs={'-': operator.neg})
 _as_power = functools.partial(
     _process_binops, specprocs={'^': operator.pow}, reverse=True)
-_as_array = functools.partial(sp.Array)
 _statements = functools.partial(Statements)
+
+
+def _as_array(tokens):
+    return sp.Array(tokens)
 
 
 def _as_comparison(tokens):
@@ -455,10 +463,14 @@ def _as_funcargs(tokens):
     return tokens if isinstance(tokens, list) else [tokens]
 
 
-def _as_general_funccall(result, *argslist, check_sympyfunc=True):
+def _as_general_parencall(result, *argslist, check_sympyfunc=True):
     flag = True
     for args in argslist:
         result = _as_sympy(result)
+        if isinstance(args, FPSliceList):
+            result = sp.IndexedBase(result)[args.slices]
+            flag = False
+            continue
         kwargs = args.pop() if args and isinstance(args[-1], dict) else {}
         str_kwargs = {str(key): val for key, val in kwargs.items()}
         if isinstance(result, _function_type):
@@ -481,8 +493,19 @@ def _as_general_funccall(result, *argslist, check_sympyfunc=True):
     return _as_sympy(result)
 
 
-def _as_funccall(tokens):
-    return _as_general_funccall(*tokens)
+def _as_slice(tokens):
+    result, temp_token = [], None
+    for token in list(tokens) + [',']:
+        if token == ',':
+            result.append(temp_token)
+            temp_token = None
+        else:
+            temp_token = token
+    return FPSliceList(result)
+
+
+def _as_parencall(tokens):
+    return _as_general_parencall(*tokens)
 
 
 def _as_primary(tokens):
@@ -497,7 +520,7 @@ def _as_primary(tokens):
             index += 1
         function = getattr(result, str(identifier))
         if argslist:
-            result = _as_general_funccall(
+            result = _as_general_parencall(
                 function, *argslist, check_sympyfunc=False)
         else:
             result = function
@@ -548,6 +571,7 @@ def _as_stmtsblock(tokens):
 
 
 ASSIGN, PLUS, MINUS, TIMES, DIVIDE, POWER, DOT = map(Literal, '=+-*/^.')
+LIT_COMMA, COL = map(Literal, ',:')
 COMP_LT, COMP_LE, COMP_EQ, COMP_NE, COMP_GE, COMP_GT = map(
     Literal, ['<', '<=', '==', '!=', '>=', '>'])
 COMPARISON = COMP_LE | COMP_GE | COMP_NE | COMP_EQ | COMP_LT | COMP_GT
@@ -573,12 +597,13 @@ BNFs:
 <kwargs>      ::= IDENTIFIER "=" <expr> { "," IDENTIFIER "=" <expr> }
 <funcargs>    ::= "(" { <expr> "," }
                   [ [ <expr> "," ] <kwargs> | <expr> ] [ "," ] ")"
-<funccall>    ::= IDENTIFIER <funcargs>+
+<slice>       ::= "[" { <expr> "," } <expr> [ "," ] "]"
+<parencall>    ::= IDENTIFIER ( <funcargs> | <slice> )+
 <array>       ::= "[" [ { ( <array> | <expr> ) "," }
                   ( <array> | <expr> ) [ "," ] ] "]"
 <parenexpr>   ::= "(" <expr> ")"
-<primary>     ::= ( <array> | <parenexpr> | <funccall> | <atom> )
-                  { "." IDENTIFIER { <funcargs> } }
+<primary>     ::= ( <array> | <parenexpr> | <parencall> | <atom> )
+                  { "." IDENTIFIER { <funcargs> | <slice> } }
 
 <power>       ::= <primary> { "^" <primary> }
 <factor>      ::= { "+" | "-" } <power>
@@ -617,15 +642,18 @@ RULE_kwargs = (IDENTIFIER + ASSIGN + RULE_expr + ZeroOrMore(
 RULE_funcargs = (LPAREN + ZeroOrMore(RULE_expr + COMMA) + Opt(
     (Opt(RULE_expr + COMMA) + RULE_kwargs) | RULE_expr) + Opt(
     COMMA) + RPAREN).set_parse_action(_as_funcargs)
-RULE_funccall = (
-    IDENTIFIER + OneOrMore(RULE_funcargs)).set_parse_action(_as_funccall)
+RULE_slice = (
+    LSQBRK + ZeroOrMore(RULE_expr + LIT_COMMA)
+    + RULE_expr + Opt(COMMA) + RSQBRK).set_parse_action(_as_slice)
+RULE_parencall = (IDENTIFIER + OneOrMore(
+    RULE_funcargs | RULE_slice)).set_parse_action(_as_parencall)
 RULE_array << (LSQBRK + Opt(ZeroOrMore(
     (RULE_array | RULE_expr) + COMMA) + (RULE_array | RULE_expr) + Opt(COMMA))
     + RSQBRK).set_parse_action(_as_array)
 RULE_parenexpr = LPAREN + RULE_expr + RPAREN
 RULE_primary = (
-    (RULE_array | RULE_parenexpr | RULE_funccall | RULE_atom)
-    + ZeroOrMore(DOT + IDENTIFIER + ZeroOrMore(RULE_funcargs))
+    (RULE_array | RULE_parenexpr | RULE_parencall | RULE_atom)
+    + ZeroOrMore(DOT + IDENTIFIER + ZeroOrMore(RULE_funcargs | RULE_slice))
     ).set_parse_action(_as_primary)
 
 RULE_power = (RULE_primary + ZeroOrMore(

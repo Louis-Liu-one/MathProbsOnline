@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "includes/problist.html" import problist %}
 
-{% block title %}题集{% endblock %}
+{% block title %}题集 - MathProbs{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
@@ -17,9 +17,15 @@
 
 {% block body %}
 <div class="sidebar">
-    <h3 class="sidebar-title">
-        {% if oflabel %}题目标签{% else %}MathProbs题集{% endif %}
-    </h3>
+    {% if oflabel %}
+        <h3 class="sidebar-title">题目标签</h3>
+        <a class="sidebar-link" href="{{ url_for('labellist') }}">
+            <div class="sidebar-item">
+                <img src="{{ url_for('static', filename='images/labels.svg') }}">
+                所有标签
+            </div>
+        </a>
+    {% else %}<h3 class="sidebar-title">MathProbs题集</h3>{% endif %}
 </div>
 <div class="mainpart">
     <h3>查询题目</h3>

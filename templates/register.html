@@ -1,30 +1,43 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>用户注册</title>
-</head>
-<body>
-    <h2>注册新账户</h2>
-    {% if error %}
-        <p style="color: red;"><strong>错误：</strong> {{ error }}</p>
-    {% endif %}
-    <form method="post" action="/register" enctype="multipart/form-data">
-        <div>
-            <label for="username">用户名：</label><br>
-            <input type="text" id="username" name="username" required>
-        </div>
-        <div>
-            <label for="password">密码：</label><br>
-            <input type="password" id="password" name="password" required>
-        </div>
-        <div>
-            <label for="avatar">头像：</label><br>
-            <input type="file" id="avatar" name="avatar"
-                formenctype="multipart/form-data">
-        </div>
-        <div>
-            <button type="submit">注册</button>
-        </div>
-    </form>
-</body>
-</html>
+{% extends "form.html" %}
+
+{% block title %}注册 - MathProbs{% endblock %}
+
+{% block form %}
+<form class="mathprobsform" action="{{ url_for('register') }}"
+    method="post" enctype="multipart/form-data">
+    <h3>注册</h3>
+    {% if error %}<p class="errormsg">错误：{{ error }}</p>{% endif %}
+    <span>
+        <label for="username">用户名：</label>
+        <input id="username" name="username" type="text"
+            spellcheck="false" placeholder="请输入用户名"
+            autocomplete="username" required>
+    </span>
+    <span>
+        <label for="password">密码：</label>
+        <input id="password" name="password" type="password"
+            spellcheck="false" placeholder="请输入密码"
+            autocomplete="new-password" required>
+    </span>
+    <span>
+        <label for="confirmpassword">确认：</label>
+        <input id="confirmpassword" name="confirmpassword" type="password"
+            spellcheck="false" placeholder="再次确认密码"
+            autocomplete="new-password" required>
+    </span>
+    <span>
+        <label for="avatar">头像：</label><br>
+        <input id="avatar" name="avatar" type="file"
+            formenctype="multipart/form-data">
+    </span>
+    <span><button type="submit">注册</button></span>
+</form>
+{% endblock %}
+
+{% block right_block %}
+<h2>已有账号？</h2>
+<p>直接登录</p>
+<a href="{{ url_for('login') }}">
+    <button class="register" type="button">登录</button>
+</a>
+{% endblock %}

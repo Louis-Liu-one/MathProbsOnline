@@ -29,6 +29,7 @@
             {{ url_for('edit_solution',
                 probno=prob.probno, solno=solution.solno) }}"
             enctype="multipart/form-data">
+        {% if error %}<p class="errormsg">错误：{{ error }}</p>{% endif %}
         <span>
             <label for="soltitle">标题：</label>
             <input type="text" id="soltitle" name="soltitle"
@@ -51,6 +52,7 @@
             <button type="submit">上传</button>
         </span>
     </form>
+    <h3>预览区</h3>
     <div class="mdpreview" id="mdpreview"></div>
 </div>
 {% endblock %}

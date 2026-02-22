@@ -9,14 +9,14 @@ div.mainpart, div.bodypart, div.submitpart {
     padding-right: 10px;
     padding-bottom: 10px;
     overflow-y: auto;
-    border-radius: 4px;
-    box-shadow: 1px 1px 3px rgba(0, 0, 0, .5);
+    border-radius: 15px;
+    box-shadow: 1px 1px 3px #00000080;
     font-family: Helvetica;
 }
 
 div.mainpart {
     left: 16%;
-    width: 79%;
+    width: 80%;
 }
 
 div.bodypart {
@@ -33,7 +33,7 @@ div#bodydiv {
 
 div.submitpart {
     left: 64%;
-    width: 31%;
+    width: 32%;
     form.mathprobsform {
         border: none;
         padding: 0;

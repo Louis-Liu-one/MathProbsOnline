@@ -6,7 +6,7 @@ div.navbar {
     height: 80px;
     left: 0px;
     top: 0px;
-    background-color: rgb(68, 154, 200);
+    background-color: #449AD5;
     background-repeat: no-repeat;
 }
 
@@ -22,11 +22,10 @@ ul.navbar-items {
         font-family: Helvetica;
         color: white;
         transition-duration: 500ms;
-        background-color: rgba(0, 0, 0, 0);
     }
     li.logo-image:hover, li.navbar-item:hover {
         transition-duration: 500ms;
-        background-color: rgba(0, 0, 127, .25);
+        background-color: #00008040;
         cursor: pointer;
     }
     li.logo-image {
@@ -48,7 +47,7 @@ ul.navbar-items {
         line-height: 80px;
         font-weight: bold;
         font-size: 35px;
-        font-family: Menlo;
+        font-family: Andale Mono;
         text-decoration: none;
         color: white;
         float: left;
@@ -62,6 +61,7 @@ ul.navbar-items {
     li.navbar-item {
         width: 75px;
         float: right;
+        line-height: 20px;
         img {
             width: 50px;
             height: 50px;
@@ -72,7 +72,7 @@ ul.navbar-items {
         width: 45px;
         height: 45px;
         padding-top: 5px;
-        padding-bottom: 5px;
+        padding-bottom: 3px;
         border-radius: 50%;
     }
 }
