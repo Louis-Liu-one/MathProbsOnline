@@ -11,22 +11,23 @@
 {% from "includes/users.html" import user_name, user_avatar %}
 
 {% macro commentform_main(post_type, post_ident) %}
-    <form id="commentform" method="POST"
+    <form id="commentform" method="POST" class="mathprobsform"
         action="{{ url_for('post_comment',
             post_type=post_type, post_ident=post_ident) }}">
-        <textarea name="commenttext" class="submittext"
-            placeholder="发表见解" rows="6"></textarea>
-        <button class="submitbutton" type="submit">发表</button>
+        <span><textarea name="commenttext" class="submittext"
+            placeholder="发表见解" spellcheck="false"></textarea></span>
+        <span><button type="submit">发表</button></span>
     </form>
 {% endmacro %}
 
 {% macro commentform_sub(comment) %}
-<form id="subcommentform" method="POST" action="{{ url_for('post_subcomment',
+<form id="subcommentform" method="POST" class="mathprobsform"
+    action="{{ url_for('post_subcomment',
         post_type=comment.post_type, post_ident=comment.post_ident,
         cmtid=comment.cmtid) }}">
-    <textarea name="commenttext" class="submittext"
-        placeholder="发表评论" rows="6"></textarea>
-    <button class="submitbutton" type="submit">发表</button>
+    <span><textarea name="commenttext" class="submittext"
+        placeholder="发表评论" spellcheck="false"></textarea></span>
+    <span><button type="submit">发表</button></span>
 </form>
 {% endmacro %}
 
@@ -81,6 +82,6 @@
                 {{ commentdiv(comment, toplevel=True) }}
                 <div class="commentsep"></div>
             {% endfor %}
-        {% else %}暂无讨论{% endif %}
+        {% else %}<p>暂无讨论</p>{% endif %}
     </div>
 {% endmacro %}

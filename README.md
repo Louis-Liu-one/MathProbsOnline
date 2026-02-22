@@ -13,7 +13,7 @@
 5. `static/katex.min.css`
 这些文件皆可在网上下载。
 
-- 网页所需的Python第三方库有：SymPy、PyParsing、Werkzeug、Flask、Flask-Login、Flask-SQLAlchemy，具体参见`requirements.txt`，可以直接使用`pip`安装，建议使用虚拟环境。命令如下：
+- 网页所需的Python第三方库有：SymPy、PyParsing、Werkzeug、Flask、Flask-Login、Flask-SQLAlchemy、func_timeout，具体参见`requirements.txt`，可以直接使用`pip`安装，建议使用虚拟环境。命令如下：
 ```bash
 cd MathProbsOnline
 python -m venv webenv

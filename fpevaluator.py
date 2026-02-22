@@ -205,8 +205,8 @@ class FPExpression(FPElement):
             symbol: self.stack[symbol]
             for symbol in self.expr.atoms(sp.Symbol)}
         functions_dict = {
-            sp.Function(function.name): self.stack[sp.Function(
-                function.name)] for function in self.expr.atoms(sp.Function)}
+            function.func: self.stack[function.func]
+            for function in self.expr.atoms(sp.Function)}
         result = self.expr.subs(symbols_dict).subs(functions_dict)
         if local_scope:
             self.stack.pop_context()

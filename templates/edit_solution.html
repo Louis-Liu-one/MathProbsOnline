@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='blocks.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='formstyle.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='md-preview.css') }}">
+<script src="{{ url_for('static', filename='md-render.js') }}"></script>
 {% endblock %}
 
 {% block navbar_title %}问题{{ prob.probno }} —— 编辑题解{% endblock %}
@@ -30,19 +32,25 @@
         <span>
             <label for="soltitle">标题：</label>
             <input type="text" id="soltitle" name="soltitle"
-                autocomplete="off" value="{{ solution.title }}" required>
+                autocomplete="off" spellcheck="false"
+                value="{{ solution.title }}" required>
         </span>
         <span>
             <label for="solution">内容：</label>
-            <textarea id="solution" name="solution"
+            <textarea id="solution" name="solution" spellcheck="false" 
                 required>{{ solution.content }}</textarea>
         </span>
         <span>
             <label for="imgfiles">更多图片：</label>
             <input type="file" id="imgfiles" name="imgfiles"
-                formenctype="multipart/form-data" multiple>
+                formenctype="multipart/form-data" accept="image/*" multiple>
         </span>
-        <button type="submit">上传</button>
+        <span>
+            <button type="button" onclick="renderElement(
+                mdpreview, solution.value, 'block');">预览</button>
+            <button type="submit">上传</button>
+        </span>
     </form>
+    <div class="mdpreview" id="mdpreview"></div>
 </div>
 {% endblock %}

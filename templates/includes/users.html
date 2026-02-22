@@ -16,8 +16,7 @@
 {%- endmacro -%}
 
 {% macro user_sidebar(user) %}
-    <a class="sidebar-link" {% if user %}
-            href="{{ url_for('users', uid=user.uid) }}" {% endif %}>
+    <a class="sidebar-link" {% if user %} href="{{ user.url() }}" {% endif %}>
         <div class="sidebar-item">
             <img class="avatar" src="{{ user_avatar(user) }}">
             {{ user_name(user) }}

@@ -1,0 +1,39 @@
+
+answerlist_js = [];
+
+function addAnswer(context, answer) {
+    try {
+        if (!context) context = '{}';
+        answerlist_js.push([JSON.parse(context), answer]);
+        const li = document.createElement('li');
+        li.innerHTML = `${escapeHTML(context)} =&gt; ${escapeHTML(answer)}
+            <img onclick="removeAnswer(${ulanswerlist.children.length})"
+                class="minus" src="${imageMinus}">`;
+        ulanswerlist.appendChild(li);
+    } catch (error) { alert(error); }
+}
+
+function addAnswerHTML(context, answer) {
+    addAnswer(context.value, answer.value);
+    context.value = ''; answer.value = '';
+}
+
+function removeAnswer(index) {
+    ulanswerlist.removeChild(ulanswerlist.children[index]);
+    answerlist_js.splice(index, 1);
+}
+
+function submitFormWithAnswers() {
+    const answerlist_input = document.createElement('input');
+    answerlist_input.type = 'hidden';
+    answerlist_input.name = 'answers';
+    answerlist_input.value = JSON.stringify(answerlist_js);
+    editform.appendChild(answerlist_input);
+    editform.submit();
+}
+
+function addAnswersBefore(answerlist_jsbefore) {
+    for (var i = 0; i < answerlist_jsbefore.length; i++)
+        addAnswer(JSON.stringify(
+            answerlist_jsbefore[i][0]), answerlist_jsbefore[i][1]);
+}

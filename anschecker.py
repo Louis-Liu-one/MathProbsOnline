@@ -49,7 +49,11 @@ def check_answer(answer, userans_parsed, context=None):
 def check_answers(answers, userans):
     try:
         userans_parsed = fpparse_with_timeout(userans)
-        return fpeval_with_timeout(userans_parsed), [check_answer(
+        try:
+            userans_nocontext = fpeval_with_timeout(userans_parsed)
+        except BaseException:  # 直接求值的结果不参与答案检查，故不对其任何错误进行处理
+            userans_nocontext = None
+        return userans_nocontext, [check_answer(
             answer, userans_parsed, context) for context, answer in answers]
     except FunctionTimedOut:
         return None, [TPStatus.TIMEOUT] * len(answers)

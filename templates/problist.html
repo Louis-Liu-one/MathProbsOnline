@@ -28,22 +28,25 @@
             {% else %}{{ url_for('problist') }}{% endif %}">
         <span><label for="probno">编号：</label>
         <input type="text" id="probno" name="probno" autocomplete="off"
-            value="{{ form.get('probno', '') }}"></span>
+            value="{{ form.get('probno', '') }}" spellcheck="false"
+            placeholder="查询特定编号的题目"></span>
         <span><label for="probtitle">名称：</label>
         <input type="text" id="probtitle" name="probtitle" autocomplete="off"
-            value="{{ form.get('probtitle', '') }}"></span>
+            value="{{ form.get('probtitle', '') }}" spellcheck="false"
+            placeholder="查询标题中含有指定文本的题目"></span>
         <span><label for="statement">内容：</label>
         <input type="text" id="statement" name="statement" autocomplete="off"
-            value="{{ form.get('statement', '') }}"></span>
+            value="{{ form.get('statement', '') }}" spellcheck="false"
+            placeholder="查询内容中含有指定文本的题目"></span>
         <span><label for="problabels">标签：</label>
         <input type="text" id="problabels" name="problabels" autocomplete="off"
-            placeholder="输入标签，用半角逗号隔开"
+            placeholder="输入题目标签，以CSV格式" spellcheck="false" 
             value="{{ form.get('problabels', '') }}"></span>
         <span><label for="source">来源：</label>
         <input type="text" id="source" name="source" autocomplete="off"
-            placeholder="输入用户名称，用半角逗号隔开"
+            placeholder="输入用户名称，以CSV格式" spellcheck="false" 
             value="{{ form.get('source', '') }}"></span>
-        <button type="submit">查询</button>
+        <span><button type="submit">查询</button></span>
     </form>
     <h3>{% if query %}满足条件的{% else %}所有{% endif %}题目</h3>
     {% if probs.first() %}{{ problist(probs) }}{% else %}<p>暂无</p>{% endif %}

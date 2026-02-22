@@ -10,10 +10,20 @@
 
 {% macro view_solution(prob) %}
     <a class="sidebar-link"
-        href="{{ prob.solutions[0].url() }}">
+        {% if prob.solutions %} href="{{ prob.solutions[0].url() }}" {% endif %}>
         <div class="sidebar-item">
             <img src="{{ url_for('static', filename='images/key.svg') }}">
             查看题解
+        </div>
+    </a>
+{% endmacro %}
+
+{% macro upload_solution(prob) %}
+    <a class="sidebar-link"
+            href="{{ url_for('upload_solution', probno=prob.probno) }}">
+        <div class="sidebar-item">
+            <img src="{{ url_for('static', filename='images/upload.svg') }}">
+            上传题解
         </div>
     </a>
 {% endmacro %}
@@ -30,7 +40,7 @@
 
 {% macro edit_solution(solution) %}
     <a class="sidebar-link" href="{{ url_for('edit_solution',
-            probno=solution.prob.probno, solno=solution.solno) }}">
+            probno=solution.probno, solno=solution.solno) }}">
         <div class="sidebar-item">
             <img src="{{ url_for('static', filename='images/edit.svg') }}">
             编辑题解
@@ -39,7 +49,7 @@
 {% endmacro %}
 
 {% macro delete_prob(prob) %}
-    <a class="sidebar-link"
+    <a class="sidebar-link" onclick="return confirm('确定要删除题目？');"
             href="{{ url_for('delete_prob', probno=prob.probno) }}">
         <div class="sidebar-item">
             <img src="{{ url_for('static',
@@ -50,8 +60,9 @@
 {% endmacro %}
 
 {% macro delete_solution(solution) %}
-    <a class="sidebar-link" href="{{ url_for('delete_solution',
-            probno=solution.prob.probno, solno=solution.solno) }}">
+    <a class="sidebar-link"  onclick="return confirm('确定要删除题解？');"
+            href="{{ url_for('delete_solution',
+            probno=solution.probno, solno=solution.solno) }}">
         <div class="sidebar-item">
             <img src="{{ url_for('static',
                 filename='images/delete-white.svg') }}">

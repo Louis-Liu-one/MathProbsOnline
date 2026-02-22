@@ -13,6 +13,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='blocks.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='problist.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='comment.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='formstyle.css') }}">
+<script src="{{ url_for('static', filename='md-render.js') }}"></script>
 <script src="{{ url_for('static', filename='delete-comment.js') }}"></script>
 {% endblock %}
 
@@ -42,8 +44,7 @@
 </div>
 <script src="{{ url_for('static', filename='cmtform-onclick.js') }}"></script>
 <script>
-    var toRender = [
-        bodydiv, ...document.getElementsByClassName('commentcontent')];
+    renderElements([
+        bodydiv, ...document.getElementsByClassName('commentcontent')]);
 </script>
-<script src="{{ url_for('static', filename='md-render.js') }}"></script>
 {% endblock %}

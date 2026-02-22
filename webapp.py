@@ -108,6 +108,9 @@ class User(db.Model, UserMixin):
             prob for prob, score in self.get_probscores().items()
             if score == 100])
 
+    def url(self):
+        return url_for('users', uid=self.uid)
+
     def get_id(self):
         return self.uid
 
@@ -186,7 +189,8 @@ class Prob(db.Model):
         passedlist = testpoints_passedlist(testpoints)
         submission = Submission(
             user=user, answer=answer, ispassed=all(passedlist),
-            score=100 * sum(passedlist) // len(passedlist))
+            score=100 * sum(passedlist) // len(
+                passedlist) if passedlist else 0)
         db.session.add(submission)
         submission.prob = self
         db.session.commit()
@@ -253,6 +257,9 @@ class ProbSolution(db.Model):
     def edit(self, title, content):
         self.title, self.content = title, content
         db.session.commit()
+
+    def __lt__(self, solution):
+        return self.probno < solution.probno
 
 
 class ProbImage(db.Model):
@@ -521,9 +528,9 @@ def edit_prob(probno):
             labelname.replace(' ', '')
             for labelname in csv2list(request.form.get('problabels'))]
         statement = request.form.get('statement')
-        answer = request.form.get('answer')
+        answers = request.form.get('answers')
         imgfiles = request.files.getlist('imgfiles')
-        prob.edit(probtitle, problabels, statement, answer)
+        prob.edit(probtitle, problabels, statement, answers)
         add_images(probno, imgfiles)
         return redirect(url_for('probs', probno=probno))
     return render_template('edit_prob.html', prob=prob)
@@ -559,11 +566,12 @@ def upload_prob():
             labelname.replace(' ', '')
             for labelname in csv2list(request.form.get('problabels'))]
         statement = request.form.get('statement')
-        answer = request.form.get('answer')
+        answers = request.form.get('answers')
         imgfiles = request.files.getlist('imgfiles')
+        print(answers)
         prob = add_prob(
             probno=probno, probtitle=probtitle,
-            statement=statement, answer=answer, source=current_user)
+            statement=statement, answer=answers, source=current_user)
         add_images(probno, imgfiles)
         for labelname in problabels:
             add_to_label(labelname, prob)
@@ -595,6 +603,7 @@ def delete_prob(probno):
     if not prob:
         return render_template('notfound.html', error='未能找到题目。')
     if current_user == prob.source:
+        prob.problabels.clear()
         db.session.delete(prob)
         db.session.commit()
         return redirect(url_for('welcome'))

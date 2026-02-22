@@ -8,16 +8,14 @@
             {% if with_source %}<th>来源</th>{% endif %}
         </tr>
         {% for prob in probs %}
-            <tr onclick="location.href
-                    = '{{ url_for('probs', probno=prob.probno) }}'">
+            <tr onclick="location.href = '{{ prob.url() }}'">
                 <td class="probno">{{ prob.probno }}</td>
                 <td class="probtitle">{{ prob.probtitle }}</td>
                 {{ problabels_problist(prob) }}
                 {% if with_source %}
                     <td class="source" {% if prob.source %}
                         onclick="event.stopPropagation();
-                            location.href
-                            = '{{ url_for('users', uid=prob.source.uid) }}'"
+                            location.href = '{{ prob.source.url() }}'"
                             {% endif %}>
                         <div>
                             <img src="{{ user_avatar(

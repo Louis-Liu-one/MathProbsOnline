@@ -1,19 +1,72 @@
 
 form.mathprobsform {
     border: 2px solid lightskyblue;
+    border-radius: 10px;
     border-collapse: collapse;
-    padding: 8px;
-    line-height: 250%;
+    padding: 10px 15px 10px 10px;
     span {
+        display: flex;
+        justify-content: right;
+        width: 100%;
+        padding: 5px 3px;
         white-space: nowrap;
+        div.answer {
+            flex-grow: 1;
+            div.answer-input {
+                display: flex;
+                flex-grow: 1;
+                input {
+                    flex-grow: 1;
+                    margin-right: 10px;
+                }
+                img {
+                    width: 30px;
+                    height: 30px;
+                }
+                img:hover {
+                    cursor: pointer;
+                }
+            }
+            ul {
+                list-style-type: none;
+                padding: 0;
+                border: 1px solid skyblue;
+                border-radius: 10px;
+                li {
+                    display: flex;
+                    align-items: center;
+                    padding: 8px 16px;
+                    border-radius: inherit;
+                    font-family: Andale Mono;
+                    img {
+                        width: 20px;
+                        height: 20px;
+                    }
+                    img.minus {
+                        margin-left: auto;
+                    }
+                    img.minus:hover {
+                        cursor: pointer;
+                    }
+                }
+                li:hover {
+                    background-color: aliceblue;
+                }
+            }
+        }
     }
     label {
         vertical-align: top;
     }
     input, textarea {
-        min-width: 40%;
-        line-height: 24px;
-        margin-right: 8px;
+        flex-grow: 1;
+        font-family: Andale Mono;
+        font-size: 15px;
+        padding: 5px 10px;
+        line-height: 20px;
+        background-color: aliceblue;
+        border: none;
+        border-radius: 10px;
     }
     textarea {
         min-width: 80%;
@@ -21,8 +74,25 @@ form.mathprobsform {
         min-height: 50px;
         height: 150px;
     }
-    button {
-        line-height: 24px;
+    input:focus, textarea:focus {
+        outline-color: lightskyblue;
+    }
+    input::file-selector-button, button {
+        border: none;
+        border-radius: 10px;
+        background-color: skyblue;
+        color: white;
+        line-height: 27px;
+        font-size: 15px;
+        width: 120px;
+        transition-duration: 500ms;
+    }
+    input::file-selector-button:hover, button:hover {
+        background-color: deepskyblue;
         cursor: pointer;
+        transition-duration: 500ms;
+    }
+    button {
+        margin-left: 10px;
     }
 }

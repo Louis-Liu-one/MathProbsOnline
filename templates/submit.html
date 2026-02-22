@@ -2,6 +2,7 @@
 {% from "includes/problabels.html" import problabels_sidebar %}
 {% from "includes/solutionlist.html" import solutionlist %}
 {% from "includes/users.html" import user_name, user_sidebar %}
+{% from "includes/sidebar.html" import return2post %}
 
 {% block title %}问题{{ prob.probno }}的提交 - MathProbs{% endblock %}
 
@@ -10,12 +11,14 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='blocks.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='problist.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='submit.css') }}">
+<script src="{{ url_for('static', filename='md-render.js') }}"></script>
 {% endblock %}
 
 {% block navbar_title %}问题{{ prob.probno }} —— 我的提交{% endblock %}
 
 {% block body %}
 <div class="sidebar">
+    {{ return2post(prob, "返回题目") }}
     {{ problabels_sidebar(prob) }}
     <h3 class="sidebar-title">题目来源</h3>{{ user_sidebar(prob.source) }}
 </div>
@@ -44,8 +47,19 @@
             {% endif %}
         {% endfor %}
     </div>
-    <h3>我的答案</h3>
-    <pre>{{ submission.answer }}</pre>
+    <p><strong>我的答案：</strong><pre>{{ submission.answer }}</pre></p>
+    <p>
+        <strong>我的得分：</strong>
+        {% if submission.score == 100 %}
+            <font color="#00BF3F"><b>100</b></font>
+        {% elif submission.score >= 80 %}
+            <font color="#FFBF00"><b>{{ submission.score }}</b></font>
+        {% elif submission.score >= 40 %}
+            <font color="#FF7F00"><b>{{ submission.score }}</b></font>
+        {% else %}
+            <font color="#FF3F00"><b>{{ submission.score }}</b></font>
+        {% endif %}
+    </p>
     <div id="answerdiv">
         <textarea id="answertext">**求值结果：**
             {% if answer_latex %}${{ answer_latex }}$
@@ -58,7 +72,6 @@
     {{ solutionlist(prob.solutions) }}
 </div>
 <script>
-    toRender = [answerdiv];
+    renderElements([answerdiv]);
 </script>
-<script src="{{ url_for('static', filename='md-render.js') }}"></script>
 {% endblock %}

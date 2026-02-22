@@ -1,19 +1,36 @@
 {% from "includes/users.html" import user_avatar, user_name %}
 
-{% macro solutionlist(solutions) %}
+{% macro solutionlist(solutions, with_head=False,
+    with_probno=False, with_user=True) %}
     {% if solutions %}
         <table class="problist">
+            {% if with_head %}
+                <tr class="probhead">
+                    {% if with_probno %}<th>题目</th>{% endif %}
+                    <th>标题</th>
+                    {% if with_user %}<th>来源</th>{% endif %}
+                </tr>
+            {% endif %}
             {% for solution in solutions %}
-                <tr onclick="location.href = '{{ url_for('solutions',
-                            probno=solution.probno, solno=solution.solno) }}'">
+                <tr onclick="location.href = '{{ solution.url() }}'">
+                    {% if with_probno %}
+                        <td class="probno" onclick="event.stopPropagation();
+                            location.href = '{{ solution.prob.url() }}'">
+                            {{ solution.probno }}</td>
+                    {% endif %}
                     <td>{{ solution.title }}</td>
-                    <td class="soluser">
-                        <div>
-                            <img src="{{ user_avatar(
-                                solution.user, black=True) }}">
-                            {{ user_name(solution.user) }}
-                        </div>
-                    </td>
+                    {% if with_user %}
+                        <td class="soluser" {% if solution.user %}
+                            onclick="event.stopPropagation();
+                                location.href = '{{ solution.user.url() }}'"
+                                {% endif %}>
+                            <div>
+                                <img src="{{ user_avatar(
+                                    solution.user, black=True) }}">
+                                {{ user_name(solution.user) }}
+                            </div>
+                        </td>
+                    {% endif %}
                 </tr>
             {% endfor %}
         </table>

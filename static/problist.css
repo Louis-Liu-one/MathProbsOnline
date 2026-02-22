@@ -2,15 +2,18 @@
 table.problist {
     width: 100%;
     border: 2px solid lightskyblue;
-    border-collapse: collapse;
+    border-spacing: 0;
+    border-radius: 7px;
     tr {
         height: 35px;
+        transition-duration: 500ms;
     }
     tr:nth-child(even) {
         background-color: aliceblue;
     }
     tr:not(.probhead):hover {
         background-color: lightblue;
+        transition-duration: 500ms;
         cursor: pointer;
     }
     th {
@@ -22,6 +25,7 @@ table.problist {
     }
     td.probno {
         width: 10%;
+        transition-duration: 500ms;
         font-family: Andale Mono;
     }
     td.problabels {
@@ -33,16 +37,20 @@ table.problist {
     td.soluser {
         width: 40%;
     }
-    td.source div, td.soluser div {
-        display: flex;
-        align-items: center;
-        img {
-            height: 25px;
-            margin-right: 5px;
+    td.source, td.soluser {
+        transition-duration: 500ms;
+        div {
+            display: flex;
+            align-items: center;
+            img {
+                height: 25px;
+                margin-right: 5px;
+            }
         }
     }
-    td.source:hover, td.soluser:hover {
+    td.probno:hover, td.source:hover, td.soluser:hover {
         background-color: skyblue;
+        transition-duration: 500ms;
     }
     a.problabel {
         text-decoration: none;
@@ -52,9 +60,11 @@ table.problist {
         display: inline-block;
         padding-left: 3px;
         padding-right: 3px;
+        transition-duration: 500ms;
     }
     a.problabel:hover {
         background-color: paleturquoise;
+        transition-duration: 500ms;
         cursor: pointer;
     }
 }
