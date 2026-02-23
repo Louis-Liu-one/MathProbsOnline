@@ -14,65 +14,74 @@ ul.navbar-items {
     list-style: none;
     margin: 0;
     padding: 0;
-    li.logo-image, li.navbar-item {
-        height: 80px;
-        text-align: center;
-        font-size: 15px;
-        font-weight: bold;
-        font-family: Helvetica;
-        color: white;
-        transition-duration: 500ms;
-    }
-    li.logo-image:hover, li.navbar-item:hover {
-        transition-duration: 500ms;
-        background-color: #00008040;
-        cursor: pointer;
-    }
-    li.logo-image {
-        width: 80px;
-        float: left;
-        margin-right: 10px;
-        padding-left: 5px;
-        padding-right: 5px;
-        img {
-            width: 50px;
-            height: 50px;
-            padding-top: 5px;
-        }
-    }
-    li.logo-text {
-        display: flex;
-        align-items: center;
-        height: 80px;
-        line-height: 80px;
-        font-weight: bold;
-        font-size: 35px;
-        font-family: Andale Mono;
-        text-decoration: none;
-        color: white;
-        float: left;
-        img.avatar {
-            width: 50px;
-            height: 50px;
-            margin-right: 15px;
-            border-radius: 50%;
-        }
-    }
-    li.navbar-item {
-        width: 75px;
-        float: right;
-        line-height: 20px;
-        img {
-            width: 50px;
-            height: 50px;
-            padding-top: 3px;
-        }
-    }
-    li.navbar-avatar img {
-        width: 45px;
-        height: 45px;
-        padding-top: 5px;
-        padding-bottom: 3px;
-        border-radius: 50%;
-    }
+}
+
+ul.navbar-items li.logo-image, li.navbar-item {
+    height: 80px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    font-family: Helvetica;
+    color: white;
+    transition-duration: 500ms;
+}
+
+ul.navbar-items li.logo-image:hover, li.navbar-item:hover {
+    transition-duration: 500ms;
+    background-color: #00008040;
+    cursor: pointer;
+}
+
+ul.navbar-items li.logo-image {
+    width: 80px;
+    float: left;
+    margin-right: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+ul.navbar-items li.logo-image img {
+    width: 50px;
+    height: 50px;
+    padding-top: 5px;
+}
+
+ul.navbar-items li.logo-text {
+    display: flex;
+    align-items: center;
+    height: 80px;
+    line-height: 80px;
+    font-weight: bold;
+    font-size: 35px;
+    font-family: Andale Mono;
+    text-decoration: none;
+    color: white;
+    float: left;
+}
+
+ul.navbar-items li.logo-text img.avatar {
+    width: 50px;
+    height: 50px;
+    margin-right: 15px;
+    border-radius: 50%;
+}
+
+li.navbar-item {
+    width: 75px;
+    float: right;
+    line-height: 20px;
+}
+
+li.navbar-item img {
+    width: 50px;
+    height: 50px;
+    padding-top: 3px;
+}
+
+li.navbar-avatar img {
+    width: 45px;
+    height: 45px;
+    padding-top: 5px;
+    padding-bottom: 3px;
+    border-radius: 50%;
 }

@@ -4,70 +4,86 @@ table.problist {
     border: 2px solid lightskyblue;
     border-spacing: 0;
     border-radius: 7px;
-    tr {
-        height: 35px;
-        transition-duration: 500ms;
-    }
-    tr:nth-child(even) {
-        background-color: aliceblue;
-    }
-    tr:not(.probhead):hover {
-        background-color: lightblue;
-        transition-duration: 500ms;
-        cursor: pointer;
-    }
-    th {
-        text-align: left;
-        background-color: lightskyblue;
-    }
-    td, th {
-        border: none;
-    }
-    td.probno {
-        width: 10%;
-        transition-duration: 500ms;
-        font-family: Andale Mono;
-    }
-    td.problabels {
-        width: 30%;
-    }
-    td.source {
-        width: 15%;
-    }
-    td.soluser {
-        width: 40%;
-    }
-    td.source, td.soluser {
-        transition-duration: 500ms;
-        div {
-            display: flex;
-            align-items: center;
-            img {
-                height: 25px;
-                margin-right: 5px;
-            }
-        }
-    }
-    td.probno:hover, td.source:hover, td.soluser:hover {
-        background-color: skyblue;
-        transition-duration: 500ms;
-        cursor: pointer;
-    }
-    a.problabel {
-        text-decoration: none;
-        color: black;
-        border: 1px solid paleturquoise;
-        border-radius: 5px;
-        display: inline-block;
-        padding-left: 3px;
-        padding-right: 3px;
-        transition-duration: 500ms;
-    }
-    a.problabel:hover {
-        background-color: paleturquoise;
-        transition-duration: 500ms;
-        cursor: pointer;
-    }
+}
+
+table.problist tr {
+    height: 35px;
+    transition-duration: 500ms;
+}
+
+table.problist tr:nth-child(even) {
+    background-color: aliceblue;
+}
+
+table.problist tr:not(.probhead):hover {
+    background-color: lightblue;
+    transition-duration: 500ms;
+    cursor: pointer;
+}
+
+table.problist th {
+    text-align: left;
+    background-color: lightskyblue;
+}
+
+table.problist td, table.problist th {
+    border: none;
+}
+
+table.problist td.probno {
+    width: 10%;
+    transition-duration: 500ms;
+    font-family: Andale Mono;
+}
+
+table.problist td.problabels {
+    width: 30%;
+}
+
+table.problist td.source {
+    width: 15%;
+}
+
+table.problist td.soluser {
+    width: 40%;
+}
+
+table.problist td.source, table.problist td.soluser {
+    transition-duration: 500ms;
+}
+
+table.problist td.source div, table.problist td.soluser div {
+    display: flex;
+    align-items: center;
+}
+
+table.problist td.source div img, table.problist td.soluser div img {
+    height: 25px;
+    margin-right: 5px;
+}
+
+table.problist td.probno:hover, table.problist td.source:hover,
+    table.problist td.soluser:hover {
+    background-color: skyblue;
+    transition-duration: 500ms;
+    cursor: pointer;
+}
+
+table.problist a.problabel {
+    text-decoration: none;
+    color: black;
+    border: 1px solid paleturquoise;
+    border-radius: 5px;
+    display: inline-block;
+    padding-left: 3px;
+    padding-right: 3px;
+    transition-duration: 500ms;
+}
+
+table.problist a.problabel:hover {
+    background-color: paleturquoise;
+    transition-duration: 500ms;
+    cursor: pointer;
 }
 
 table.labellist {
@@ -75,16 +91,19 @@ table.labellist {
     border: 2px solid lightskyblue;
     border-spacing: 0;
     border-radius: 7px;
-    tr {
-        height: 35px;
-    }
-    td {
-        text-align: center;
-        transition-duration: 500ms;
-    }
-    td:hover {
-        background-color: lightskyblue;
-        cursor: pointer;
-        transition-duration: 500ms;
-    }
+}
+
+table.labellist tr {
+    height: 35px;
+}
+
+table.labellist td {
+    text-align: center;
+    transition-duration: 500ms;
+}
+
+table.labellist td:hover {
+    background-color: lightskyblue;
+    cursor: pointer;
+    transition-duration: 500ms;
 }

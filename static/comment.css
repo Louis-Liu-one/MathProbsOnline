@@ -2,61 +2,70 @@
 div.commentlist {
     clear: both;
     font-family: Helvetica;
-    div.comment {
-        clear: both;
-        span.avatar, img.avatar {
-            width: 36px;
-            height: 36px;
-            margin-top: 2px;
-        }
-        img.avatar {
-            border-radius: 50%;
-            transition-duration: 500ms;
-        }
-        img.avatar:hover {
-            box-shadow: 0 0 3px #00000080;
-            cursor: pointer;
-            transition-duration: 500ms;
-        }
-        div.commentbody {
-            float: right;
-            width: calc(100% - 48px);
-            margin-bottom: 10px;
-            p.commentname, p.commentfoot {
-                margin-top: 0;
-                margin-bottom: 0;
-                font-size: 13px;
-                color: gray;
-            }
-            p.commentfoot {
-                img {
-                    float: right;
-                    width: 18px;
-                    height: 18px;
-                }
-                img:hover {
-                    background-color: lightblue;
-                    border-radius: 50%;
-                    cursor: pointer;
-                }
-            }
-            div.commentcontent {
-                margin-top: 0;
-                margin-bottom: 0;
-                p {
-                    margin-top: 0;
-                    margin-bottom: 0;
-                }
-            }
-            form {
-                display: none;
-                clear: both;
-            }
-        }
-    }
-    div.commentsep {
-        clear: both;
-        border-bottom: 1px solid gray;
-        margin-bottom: 10px;
-    }
+}
+
+div.comment {
+    clear: both;
+}
+
+div.comment span.avatar, div.comment img.avatar {
+    width: 36px;
+    height: 36px;
+    margin-top: 2px;
+}
+
+div.comment img.avatar {
+    border-radius: 50%;
+    transition-duration: 500ms;
+}
+
+div.comment img.avatar:hover {
+    box-shadow: 0 0 3px #00000080;
+    cursor: pointer;
+    transition-duration: 500ms;
+}
+
+div.commentbody {
+    float: right;
+    width: calc(100% - 48px);
+    margin-bottom: 10px;
+}
+
+p.commentname, p.commentfoot {
+    margin-top: 0;
+    margin-bottom: 0;
+    font-size: 13px;
+    color: gray;
+}
+
+p.commentfoot img {
+    float: right;
+    width: 18px;
+    height: 18px;
+}
+p.commentfoot img:hover {
+    background-color: lightblue;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+div.commentcontent {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+div.commentcontent p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+div.commentbody form {
+    display: none;
+    clear: both;
+}
+
+div.commentsep {
+    clear: both;
+    border-bottom: 1px solid gray;
+    margin-bottom: 10px;
 }
