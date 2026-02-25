@@ -1,39 +1,49 @@
 
 # MathProbsOnline
 
-为MathProbs项目建立的网站，已上线。
+为MathProbs项目建立的网站，已上线，[点击前往](https://MathProbsOnline.PythonAnyWhere.com)。
 
 ## 构建方法
 
-- 项目使用Markdown-It渲染Markdown，使用Markdown-It-TeXMath插件和KaTeX引擎渲染数学公式，使用Font Awesome渲染图标。需要添加的文件或目录有：
-1. `static/markdown-it.min.js`
-2. `static/texmath.min.js`
-3. `static/texmath.min.css`
-4. `static/katex.min.js`
-5. `static/katex.min.css`
-6. `static/fontawesome/css/`
-7. `static/fontawesome/js/`
-8. `static/fontawesome/webfonts/`
-这些文件或目录皆可在网上找到。
+- 项目使用Markdown-It渲染Markdown，使用Markdown-It-TeXMath插件和KaTeX引擎渲染数学公式，使用Font Awesome渲染图标。初次进入网页时，需要加载CDN，速度较慢，敬请谅解。
 
-- 网页所需的Python第三方库有：SymPy、PyParsing、Werkzeug、Flask、Flask-Login、Flask-SQLAlchemy、func_timeout，具体参见`requirements.txt`，可以直接使用`pip`安装，建议使用虚拟环境。命令如下：
+- 网页服务所需的Python第三方库有：SymPy、PyParsing、Werkzeug、Flask、Flask-Login、Flask-SQLAlchemy、Flask-Migrate、func_timeout，具体参见`requirements.txt`，可以直接使用`pip`安装，建议使用虚拟环境。命令如下：
 ```bash
 cd MathProbsOnline
 python -m venv webenv
 source webenv/bin/activate
 pip install -r requirements.txt
+# 操作
+deactivate
 ```
 
-- 所有构建都完成时，直接运行`webapp.py`，或从他处导入：
+- 所有构建都完成时，先将你的Flask密钥设置在`FLASK_SECRET_KEY`环境变量中：
+```bash
+FLASK_SECRET_KEY=密钥...
+export FLASK_SECRET_KEY
+```
+你也可以将上述命令加入`webenv/bin/activate`中。然后，运行`webapp.py`，或从他处导入：
 ```python
 from webapp import app
 app.run()
 ```
 此时，网页可在`localhost:5000`访问。
 
+- 初始化Flask-Migrate时，使用
+```bash
+flask --app webapp.py db init
+```
+代码进行修改后，更新数据库时，使用
+```bash
+flask --app webapp.py db migrate -m '描述...'
+flask --app webapp.py db upgrade
+```
+
 ## 部署域名
 
 已经在PythonAnyWhere上部署，[点击前往](https://MathProbsOnline.PythonAnyWhere.com)。
+
+PythonAnyWhere上使用的Flask密钥与仓库中的不同，仓库中的密钥仅作测试之用。
 
 ## 使用说明
 
