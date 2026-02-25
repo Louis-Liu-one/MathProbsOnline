@@ -22,9 +22,10 @@ div.mainpart {
 div.bodypart {
     left: 16%;
     width: 45%;
-    img {
-        width: 100%;
-    }
+}
+
+div.bodypart img {
+    width: 100%;
 }
 
 div#bodydiv {

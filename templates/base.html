@@ -1,3 +1,4 @@
+{% from "includes/users.html" import user_avatar_img %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -14,6 +15,8 @@
         href="{{ url_for('static', filename='katex.min.css') }}">
     <link rel="stylesheet"
         href="{{ url_for('static', filename='texmath.min.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='fontawesome/css/all.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
     {% block styles %}{% endblock %}
 </head>
@@ -28,27 +31,36 @@
                 {% block navbar_title %}{% endblock %}
             </li>
             <li class="navbar-item">
-                <img src="{{ url_for('static', filename='images/help.svg') }}">
-                <br>帮助
+                <i class="fa-solid fa-circle-info"></i><br>帮助
             </li>
             <li class="navbar-item"
                     onclick="location.href = '{{ url_for('labellist') }}'">
-                <img src="{{ url_for('static', filename='images/labels.svg') }}">
-                <br>标签
+                <i class="fa-solid fa-tags"></i><br>标签
             </li>
             <li class="navbar-item"
                     onclick="location.href = '{{ url_for('problist') }}'">
-                <img src="{{ url_for('static',
-                    filename='images/library.svg') }}"><br>题集
+                <i class="fa-solid fa-book"></i><br>题集
             </li>
+            {% if current_user and current_user.is_authenticated %}
+                <li class="navbar-item" onclick="location.href
+                    = '{{ url_for('unread_comments') }}'">
+                    {% set unread_comments = current_user.unread_comments() %}
+                    {% if unread_comments %}
+                        <i class="fa-solid fa-envelope"></i>
+                        <br>{{ unread_comments.__len__() }}条未读
+                    {% else %}
+                        <i class="fa-solid fa-envelope-circle-check"></i>
+                        <br>无未读信息
+                    {% endif %}
+                </li>
+            {% endif %}
             <li class="navbar-item navbar-avatar" onclick="location.href
                     = '{{ url_for('welcome') }}'">
                 {% if current_user and current_user.is_authenticated %}
-                    <img src="{{ url_for('avatarfile', uid=current_user.uid) }}">
+                    {{ user_avatar_img(current_user) }}
                     <br>{{ current_user.name }}
                 {% else %}
-                    <img src="{{ url_for('static',
-                        filename='images/avatar.svg') }}"><br>未登录
+                    <i class="fa-solid fa-user"></i><br>未登录
                 {% endif %}
             </li>
         </ul>

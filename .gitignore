@@ -1,11 +1,13 @@
 .DS_Store
 */.DS_Store
 __pycache__
-instance
 webenv
+instance
+migrations
 static/fonts
 static/katex.min.js
 static/katex.min.css
 static/markdown-it.min.js
 static/texmath.min.js
 static/texmath.min.css
+static/fontawesome

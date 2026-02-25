@@ -27,23 +27,24 @@
     <div class="tpstatus">
         {% for status in testpoints %}
             {% if status == TPStatus.CORRECT %}
-                <img title="答案正确"
-                    src="{{ url_for('static', filename='images/correct.svg') }}">
+                <i class="fa-solid fa-circle-check"
+                    title="答案正确" style="color: #72C040;"></i>
             {% elif status == TPStatus.INCORRECT %}
-                <img title="答案错误"
-                    src="{{ url_for('static', filename='images/incorrect.svg') }}">
+                <i class="fa-solid fa-circle-xmark"
+                    title="答案错误" style="color: #D75746;"></i>
             {% elif status == TPStatus.PARSEERR %}
-                <img title="解析错误"
-                    src="{{ url_for('static', filename='images/error.svg') }}">
+                <i class="fa-solid fa-circle-exclamation"
+                    title="解析错误" style="color: #D75746;"></i>
             {% elif status == TPStatus.EVALERR %}
-                <img title="求值错误"
-                    src="{{ url_for('static', filename='images/error.svg') }}">
+                <i class="fa-solid fa-circle-question"
+                    title="求值错误" style="color: #D75746;"></i>
             {% elif status == TPStatus.TIMEOUT %}
-                <img title="超时错误"
-                    src="{{ url_for('static', filename='images/timeout.svg') }}">
+                <i class="fa-solid fa-clock"
+                    title="超时错误" style="color: #E89F3C;"></i>
             {% elif status == TPStatus.ANSERR %}
-                <img title="题目提供的答案无法解析，请联系提供者{{- user_name(prob.source) -}}"
-                    src="{{ url_for('static', filename='images/error.svg') }}">
+                <i class="fa-solid fa-circle-minus"
+                    title="题目提供的答案无法解析，请联系提供者{{- user_name(
+                        prob.source) -}}" style="color: #636D88;"></i>
             {% endif %}
         {% endfor %}
     </div>
@@ -51,13 +52,13 @@
     <p>
         <strong>我的得分：</strong>
         {% if submission.score == 100 %}
-            <font color="#00BF3F"><b>100</b></font>
+            <font color="#72C040"><b>100</b></font>
         {% elif submission.score >= 80 %}
-            <font color="#FFBF00"><b>{{ submission.score }}</b></font>
+            <font color="#E89F3C"><b>{{ submission.score }}</b></font>
         {% elif submission.score >= 40 %}
-            <font color="#FF7F00"><b>{{ submission.score }}</b></font>
+            <font color="#E07B41"><b>{{ submission.score }}</b></font>
         {% else %}
-            <font color="#FF3F00"><b>{{ submission.score }}</b></font>
+            <font color="#D75746"><b>{{ submission.score }}</b></font>
         {% endif %}
     </p>
     <div id="answerdiv">
@@ -68,8 +69,7 @@
     </div>
 </div>
 <div class="submitpart">
-    <h3>查看题解</h3>
-    {{ solutionlist(prob.solutions) }}
+    <h3>查看题解</h3>{{ solutionlist(prob.solutions) }}
 </div>
 <script>
     renderElements([answerdiv]);

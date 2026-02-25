@@ -40,9 +40,7 @@ def check_answer(answer, userans_parsed, context=None):
     try:
         answer_parsed = fpparse_with_timeout(answer)
         answer_eval = fpeval_with_timeout(answer_parsed, context)
-    except FunctionTimedOut:
-        return TPStatus.TIMEOUT
-    except Exception:
+    except BaseException:
         return TPStatus.ANSERR
     try:
         userans_eval = fpeval_with_timeout(userans_parsed, context)
@@ -69,7 +67,7 @@ def check_answers(answers, userans):
         return None, [TPStatus.TIMEOUT] * len(answers)
     except ParseException:
         return None, [TPStatus.PARSEERR] * len(answers)
-    except Exception:
+    except BaseException:
         return None, [TPStatus.EVALERR] * len(answers)
 
 

@@ -21,8 +21,7 @@
         <h3 class="sidebar-title">题目标签</h3>
         <a class="sidebar-link" href="{{ url_for('labellist') }}">
             <div class="sidebar-item">
-                <img src="{{ url_for('static', filename='images/labels.svg') }}">
-                所有标签
+                <i class="fa-solid fa-tags"></i>所有标签
             </div>
         </a>
     {% else %}<h3 class="sidebar-title">MathProbs题集</h3>{% endif %}

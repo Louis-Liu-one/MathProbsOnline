@@ -11,11 +11,13 @@ Copyright (c) 2026 Louis Liu  All rights reserved.
 /post-comment/<post_type>/<post_ident>         发表评论
 /post-comment/<post_type>/<post_ident>/<cmtid> 回复评论
 /delete-comment                                删除评论
+/unread-comments                               未读评论
 
 题目：
 /upload-prob         上传题目
-/labels/<labelname>  题目标签
-/probs               题集
+/labels/             所有标签
+/labels/<labelname>  单个标签
+/probs/              题集
 /probs/<probno>                 题目<probno>
 /probs/<probno>/submit          提交题目<probno>的答案
 /probs/<probno>/edit            编辑题目
@@ -29,6 +31,7 @@ Copyright (c) 2026 Louis Liu  All rights reserved.
 '''
 
 import io
+import os
 import csv
 import json
 import random
@@ -40,15 +43,17 @@ from flask import render_template, redirect, send_file
 from flask_login import LoginManager, UserMixin, current_user
 from flask_login import login_required, login_user, logout_user
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from anschecker import TPStatus, check_answers, testpoints_passedlist, latex
 
 
 app = Flask(__name__)
-app.secret_key = '2042090d09526f304d37c436f27a5d08'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite3'
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 def csv2list(csvstr):
@@ -64,9 +69,8 @@ def list2csv(ls):
 
 # =========================== 用户数据库与登录系统 ===========================
 
-login_manager = LoginManager()
+login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-login_manager.init_app(app)
 
 
 class User(db.Model, UserMixin):
@@ -82,6 +86,7 @@ class User(db.Model, UserMixin):
     uploadedprobs = db.relationship('Prob', backref='source')
     solutions = db.relationship('ProbSolution', backref='user')
     comments = db.relationship('Comment', backref='user')
+    cmtlastvisit = db.Column(db.DateTime)
 
     def verify_password(self, password):
         return False if self.password is None else \
@@ -122,6 +127,17 @@ class User(db.Model, UserMixin):
         return sorted([
             prob for prob, score in self.get_probscores().items()
             if score == 100])
+
+    def unread_comments(self):
+        return Comment.query.filter(db.and_(
+            True if self.cmtlastvisit is None
+            else self.cmtlastvisit < Comment.timestamp,
+            Comment.replyto.has(Comment.uid == self.uid))).order_by(
+            Comment.timestamp.desc()).all()
+
+    def update_cmtlastvisit(self):
+        self.cmtlastvisit = datetime.now()
+        db.session.commit()
 
     def url(self):
         return url_for('users', uid=self.uid)
@@ -249,7 +265,7 @@ class Submission(db.Model):
     submitid = db.Column(db.Integer, primary_key=True)
     probno = db.Column(
         db.String(16), db.ForeignKey('probs.probno'), nullable=False)
-    userid = db.Column(db.Integer, db.ForeignKey('users.uid'), nullable=False)
+    userid = db.Column(db.Integer, db.ForeignKey('users.uid'))
     answer = db.Column(db.Text, nullable=False)
     ispassed = db.Column(db.Boolean)
     score = db.Column(db.Integer)
@@ -263,7 +279,7 @@ class ProbSolution(db.Model):
     probno = db.Column(
         db.String(16), db.ForeignKey('probs.probno'), primary_key=True)
     solno = db.Column(db.Integer, primary_key=True)
-    userid = db.Column(db.Integer, db.ForeignKey('users.uid'), nullable=False)
+    userid = db.Column(db.Integer, db.ForeignKey('users.uid'))
     title = db.Column(db.String(128), nullable=False)
     content = db.Column(db.Text, nullable=False)
 
@@ -310,10 +326,6 @@ class ProbLabel(db.Model):
     probs = db.relationship(
         'Prob', secondary=prob_label, back_populates='problabels',
         collection_class=set)
-
-    def add_prob(self, prob):
-        self.probs.add(prob)
-        db.session.commit()
 
     def url(self):
         return url_for('problistoflabel', labelname=self.labelname)
@@ -411,12 +423,14 @@ def get_label(labelname):
         return db.session.get(ProbLabel, labelname)
 
 
-def add_to_label(labelname, prob):
-    label = get_label(labelname)
-    if label is None:
-        label = ProbLabel(labelname=labelname)
-        db.session.add(label)
-    label.add_prob(prob)
+def add2labels(labelnames, prob):
+    for labelname in set(labelnames):
+        label = get_label(labelname)
+        if label is None:
+            label = ProbLabel(labelname=labelname)
+            db.session.add(label)
+        label.probs.add(prob)
+    db.session.commit()
 
 
 # =========================== 讨论区数据库支持 ===========================
@@ -443,6 +457,13 @@ class Comment(db.Model):
             [comment.get_all_replies() for comment in self.replies],
             start=self.replies.copy()))
 
+    def get_post(self):
+        if self.post_type == 'prob':
+            return get_prob(self.post_ident)
+        elif self.post_type == 'solution':
+            probno, solno = csv2list(self.post_ident)
+            return get_solution(probno, int(solno))
+
     def __lt__(self, comment):
         return self.timestamp < comment.timestamp
 
@@ -452,14 +473,6 @@ def get_comment(cmtid):
         return db.session.get(Comment, cmtid)
 
 
-def find_post(post_type, post_ident):
-    if post_type == 'prob':
-        return get_prob(post_ident)
-    elif post_type == 'solution':
-        probno, solno = csv2list(post_ident)
-        return get_solution(probno, int(solno))
-
-
 # =========================== 讨论区路由 ===========================
 
 
@@ -467,11 +480,12 @@ def find_post(post_type, post_ident):
 @login_required
 def post_comment(post_type, post_ident):
     content = request.form.get('commenttext')
-    db.session.add(Comment(
+    comment = Comment(
         user=current_user, content=content,
-        post_type=post_type, post_ident=post_ident))
+        post_type=post_type, post_ident=post_ident)
+    db.session.add(comment)
     db.session.commit()
-    return redirect(find_post(post_type, post_ident).url())
+    return redirect(comment.get_post().url())
 
 
 @app.route(
@@ -479,11 +493,12 @@ def post_comment(post_type, post_ident):
 @login_required
 def post_subcomment(post_type, post_ident, cmtid):
     content = request.form.get('commenttext')
-    db.session.add(Comment(
+    comment = Comment(
         user=current_user, content=content, replyto_id=cmtid,
-        post_type=post_type, post_ident=post_ident))
+        post_type=post_type, post_ident=post_ident)
+    db.session.add(comment)
     db.session.commit()
-    return redirect(find_post(post_type, post_ident).url())
+    return redirect(comment.get_post().url())
 
 
 @app.route('/delete-comment', methods=['POST'])
@@ -491,17 +506,22 @@ def post_subcomment(post_type, post_ident, cmtid):
 def delete_comment():
     cmtid = int(request.form.get('cmtid'))
     comment = get_comment(cmtid)
-    post = find_post(comment.post_type, comment.post_ident)
     if comment and current_user == comment.user:
         db.session.delete(comment)
         db.session.commit()
-    return redirect(post.url())
+    return redirect(comment.get_post().url())
+
+
+@app.route('/unread-comments')
+@login_required
+def unread_comments():
+    return render_template('unread_comments.html')
 
 
 # =========================== 题目各项网页 ===========================
 
 
-@app.route('/probs', methods=['GET', 'POST'])
+@app.route('/probs/', methods=['GET', 'POST'])
 def problist():
     form = {}
     if request.method == 'POST':
@@ -513,7 +533,7 @@ def problist():
         'problist.html', probs=probs, query=query, form=form)
 
 
-@app.route('/labels')
+@app.route('/labels/')
 def labellist():
     return render_template('labellist.html', labels=ProbLabel.query.all())
 
@@ -648,8 +668,7 @@ def upload_prob():
                 'upload_prob.html', probno=probno, probtitle=probtitle,
                 problabels=request.form.get('problabels'),
                 statement=statement, answers=answers, error=prob)
-        for labelname in problabels:
-            add_to_label(labelname, prob)
+        add2labels(problabels, prob)
         return redirect(prob.url())
     return render_template('upload_prob.html')
 
@@ -780,15 +799,7 @@ def avatarfile(uid):
     user = find_user(uid)
     if user and user.avatar:
         return user.avatar_response()
-    return send_file('static/images/avatar.svg')
-
-
-@app.route('/avatars/<int:uid>/black')
-def avatarfile_black(uid):
-    user = find_user(uid)
-    if user and user.avatar:
-        return user.avatar_response()
-    return send_file('static/images/avatar-black.svg')
+    return ''
 
 
 @app.route('/logout')

@@ -2,8 +2,7 @@
 {% macro return2post(post, text) %}
     <a class="sidebar-link" href="{{ post.url() }}">
         <div class="sidebar-item">
-            <img src="{{ url_for('static', filename='images/return.svg') }}">
-            {{ text }}
+            <i class="fa-solid fa-circle-left"></i>{{ text }}
         </div>
     </a>
 {% endmacro %}
@@ -11,10 +10,7 @@
 {% macro view_solution(prob) %}
     <a class="sidebar-link"
         {% if prob.solutions %} href="{{ prob.solutions[0].url() }}" {% endif %}>
-        <div class="sidebar-item">
-            <img src="{{ url_for('static', filename='images/key.svg') }}">
-            查看题解
-        </div>
+        <div class="sidebar-item"><i class="fa-solid fa-key"></i>查看题解</div>
     </a>
 {% endmacro %}
 
@@ -22,8 +18,7 @@
     <a class="sidebar-link"
             href="{{ url_for('upload_solution', probno=prob.probno) }}">
         <div class="sidebar-item">
-            <img src="{{ url_for('static', filename='images/upload.svg') }}">
-            上传题解
+            <i class="fa-solid fa-cloud-arrow-up"></i>上传题解
         </div>
     </a>
 {% endmacro %}
@@ -32,8 +27,7 @@
     <a class="sidebar-link"
         href="{{ url_for('edit_prob', probno=prob.probno) }}">
         <div class="sidebar-item">
-            <img src="{{ url_for('static', filename='images/edit.svg') }}">
-            编辑题目
+            <i class="fa-solid fa-pen-to-square"></i>编辑题目
         </div>
     </a>
 {% endmacro %}
@@ -42,8 +36,7 @@
     <a class="sidebar-link" href="{{ url_for('edit_solution',
             probno=solution.probno, solno=solution.solno) }}">
         <div class="sidebar-item">
-            <img src="{{ url_for('static', filename='images/edit.svg') }}">
-            编辑题解
+            <i class="fa-solid fa-pen-to-square"></i>编辑题解
         </div>
     </a>
 {% endmacro %}
@@ -52,9 +45,7 @@
     <a class="sidebar-link" onclick="return confirm('确定要删除题目？');"
             href="{{ url_for('delete_prob', probno=prob.probno) }}">
         <div class="sidebar-item">
-            <img src="{{ url_for('static',
-                filename='images/delete-white.svg') }}">
-            删除题目
+            <i class="fa-solid fa-trash-can"></i>删除题目
         </div>
     </a>
 {% endmacro %}
@@ -64,9 +55,7 @@
             href="{{ url_for('delete_solution',
             probno=solution.probno, solno=solution.solno) }}">
         <div class="sidebar-item">
-            <img src="{{ url_for('static',
-                filename='images/delete-white.svg') }}">
-            删除题解
+            <i class="fa-solid fa-trash-can"></i>删除题解
         </div>
     </a>
 {% endmacro %}

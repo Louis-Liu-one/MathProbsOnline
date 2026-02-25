@@ -33,12 +33,12 @@ form.mathprobsform div.answer-input input {
     margin-right: 10px;
 }
 
-form.mathprobsform div.answer-input img {
-    width: 30px;
-    height: 30px;
+form.mathprobsform div.answer-input i {
+    font-size: 25px;
+    color: #00BFFF;
 }
 
-form.mathprobsform div.answer-input img:hover {
+form.mathprobsform div.answer-input i:hover {
     cursor: pointer;
 }
 
@@ -56,16 +56,19 @@ form.mathprobsform div.answer ul li {
     border-radius: inherit;
     font-family: Andale Mono;
 }
-form.mathprobsform div.answer ul li img {
-    width: 20px;
-    height: 20px;
+
+form.mathprobsform div.answer ul li i {
+    font-size: 15px;
+    margin: 0 5px;
 }
 
-form.mathprobsform div.answer ul li img.minus {
+form.mathprobsform div.answer ul li i.minus {
+    font-size: 18px;
+    color: #00BFFF;
     margin-left: auto;
 }
 
-form.mathprobsform div.answer ul li img.minus:hover {
+form.mathprobsform div.answer ul li i.minus:hover {
     cursor: pointer;
 }
 

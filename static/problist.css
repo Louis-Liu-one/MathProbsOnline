@@ -60,6 +60,12 @@ table.problist td.source div, table.problist td.soluser div {
 table.problist td.source div img, table.problist td.soluser div img {
     height: 25px;
     margin-right: 5px;
+    border-radius: 50%;
+}
+
+table.problist td.source div i, table.problist td.soluser div i {
+    font-size: 20px;
+    margin: 0 2px;
 }
 
 table.problist td.probno:hover, table.problist td.source:hover,

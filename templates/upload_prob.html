@@ -58,9 +58,8 @@
                     <input type="text" id="answer" name="answer"
                         autocomplete="off" spellcheck="false"
                         placeholder="输入答案">
-                    <img onclick="addAnswerHTML(context, answer);"
-                        src="{{ url_for('static',
-                            filename='images/plus.svg') }}">
+                    <i onclick="addAnswerHTML(context, answer);"
+                        class="fa-solid fa-circle-plus"></i>
                 </div>
                 <ul id="ulanswerlist"></ul>
             </div>
@@ -80,7 +79,6 @@
     <div class="mdpreview" id="mdpreview"></div>
 </div>
 <script>
-    var imageMinus = '{{ url_for('static', filename='images/minus.svg') }}';
     {% if answers %}addAnswersBefore({{ answers }});{% endif %}
 </script>
 {% endblock %}

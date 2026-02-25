@@ -1,5 +1,5 @@
 {% from "includes/problabels.html" import problabels_problist %}
-{% from "includes/users.html" import user_avatar, user_name %}
+{% from "includes/users.html" import user_avatar_img, user_name %}
 
 {% macro problist(probs, with_source=True) %}
     <table class="problist">
@@ -18,8 +18,7 @@
                             location.href = '{{ prob.source.url() }}'"
                             {% endif %}>
                         <div>
-                            <img src="{{ user_avatar(
-                                prob.source, black=True) }}">
+                            {{ user_avatar_img(prob.source) }}
                             {{ user_name(prob.source) }}
                         </div>
                     </td>

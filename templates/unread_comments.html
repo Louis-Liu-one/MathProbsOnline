@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "includes/comment.html" import commentdiv with context %}
+
+{% block title %}未读评论 - MathProbs{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='blocks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='comment.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='formstyle.css') }}">
+<script src="{{ url_for('static', filename='md-render.js') }}"></script>
+<script src="{{ url_for('static', filename='delete-comment.js') }}"></script>
+{% endblock %}
+
+{% block navbar_title %}
+    {% if oflabel %}标签：{{ labelname }}
+    {% else %}题集{% endif %}
+{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    <h3 class="sidebar-title">未读评论</h3>
+    <a class="sidebar-link" href="{{ url_for('welcome') }}">
+        <div class="sidebar-item">
+            <i class="fa-solid fa-circle-left"></i>返回主页
+        </div>
+    </a>
+</div>
+<div class="mainpart">
+    <h3>未读评论</h3>
+    {% set unread_comments = current_user.unread_comments() %}
+    {% if unread_comments %}
+        <div class="commentlist">
+            {% for comment in unread_comments %}
+                {{ commentdiv(comment, with_post=True) }}
+                <div class="commentsep"></div>
+            {% endfor %}
+        </div>
+    {% else %}<p>暂无</p>{% endif %}
+    {% do current_user.update_cmtlastvisit() %}
+</div>
+<script src="{{ url_for('static', filename='cmtform-onclick.js') }}"></script>
+<script>
+    renderElements([...document.getElementsByClassName('commentcontent')]);
+</script>
+{% endblock %}

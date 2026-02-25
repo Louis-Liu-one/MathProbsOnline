@@ -1,4 +1,4 @@
-{% from "includes/users.html" import user_avatar, user_name %}
+{% from "includes/users.html" import user_avatar_img, user_name %}
 
 {% macro solutionlist(solutions, with_head=False,
     with_probno=False, with_user=True) %}
@@ -25,8 +25,7 @@
                                 location.href = '{{ solution.user.url() }}'"
                                 {% endif %}>
                             <div>
-                                <img src="{{ user_avatar(
-                                    solution.user, black=True) }}">
+                                {{ user_avatar_img(solution.user) }}
                                 {{ user_name(solution.user) }}
                             </div>
                         </td>

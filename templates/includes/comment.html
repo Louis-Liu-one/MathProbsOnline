@@ -8,7 +8,7 @@
     3. 要在结尾引入`static/cmtform-onclick.js`以使用回复功能；
     4. 要将`document.getElementsByClassName('commentcontent')`中所有元素包含于`toRender`列表中以使用Markdown渲染。
 #}
-{% from "includes/users.html" import user_name, user_avatar %}
+{% from "includes/users.html" import user_name, user_avatar_img %}
 
 {% macro commentform_main(post_type, post_ident) %}
     <form id="commentform" method="POST" class="mathprobsform"
@@ -20,18 +20,19 @@
     </form>
 {% endmacro %}
 
-{% macro commentform_sub(comment) %}
+{% macro commentform_sub(comment, new_window=False) %}
 <form id="subcommentform" method="POST" class="mathprobsform"
     action="{{ url_for('post_subcomment',
         post_type=comment.post_type, post_ident=comment.post_ident,
-        cmtid=comment.cmtid) }}">
+        cmtid=comment.cmtid) }}" {% if new_window %} target="_blank" {% endif %}>
     <span><textarea name="commenttext" class="submittext"
         placeholder="发表评论" spellcheck="false"></textarea></span>
     <span><button type="submit">发表</button></span>
 </form>
 {% endmacro %}
 
-{% macro commentbody(comment, toplevel=False, secondlevel=False) %}
+{% macro commentbody(comment,
+    toplevel=False, secondlevel=False, with_post=False) %}
 <div class="commentbody">
     <p class="commentname">
         {{ user_name(comment.user) }}
@@ -44,33 +45,38 @@
     </div>
     <p class="commentfoot">
         {{ comment.timestamp.strftime('%Y-%m-%d %H:%M') }}
-        <img id="commentbutton"
-            src="{{ url_for('static', filename='images/comment.svg') }}">
-        {% if current_user == comment.user %}
-            <img id="deletebutton"
-                src="{{ url_for('static', filename='images/delete.svg') }}"
+        <i id="commentbutton" title="发表评论"
+            class="fa-solid fa-comment-dots"></i>
+        {% if current_user == comment.user and not with_post %}
+            <i id="deletebutton" title="删除评论" class="fa-solid fa-trash-can"
                 onclick="deleteComment(
-                    '{{ url_for('delete_comment') }}', '{{ comment.cmtid }}')">
+                '{{ url_for('delete_comment') }}', '{{ comment.cmtid }}')"></i>
+        {% endif %}
+        {% if with_post %}
+            <i id="gotopostbutton" title="前往帖子" class="fa-solid fa-newspaper"
+                onclick="window.open(
+                    '{{ comment.get_post().url() }}', '_block')"></i>
         {% endif %}
     </p>
-    {{ commentform_sub(comment) }}
+    {{ commentform_sub(comment, new_window=with_post) }}
     {% if toplevel %}
         {% for subcomment in comment.get_all_replies() %}
             {{ commentdiv(subcomment,
-                secondlevel=subcomment.replyto == comment) }}
+                secondlevel=subcomment.replyto == comment,
+                with_post=with_post) }}
         {% endfor %}
     {% endif %}
 </div>
 {% endmacro %}
 
-{% macro commentdiv(comment, toplevel=False, secondlevel=False) %}
+{% macro commentdiv(comment,
+    toplevel=False, secondlevel=False, with_post=False) %}
 <div class="comment">
     <span class="avatar" {% if comment.user %} onclick="location.href
             = '{{ url_for('users', uid=comment.user.uid) }}'" {% endif %}>
-        <img class="avatar" alt="avatar"
-            src="{{ user_avatar(comment.user, black=True) }}">
+        {{ user_avatar_img(comment.user, 'avatar') }}
     </span>
-    {{ commentbody(comment, toplevel, secondlevel) }}
+    {{ commentbody(comment, toplevel, secondlevel, with_post) }}
 </div>
 {% endmacro %}
 

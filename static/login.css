@@ -38,6 +38,9 @@ div.login form span {
 }
 
 div.register-back {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 50%;
     height: 100%;
     margin: auto;
@@ -48,8 +51,6 @@ div.register-back {
 
 div.register-front {
     text-align: center;
-    margin: auto;
-    margin-top: 50%;
 }
 
 div.register-front h2 {
@@ -73,6 +74,7 @@ div.login-block button.register {
     font-size: 15px;
     width: 120px;
     transition-duration: 500ms;
+    margin-bottom: 10px;
 }
 
 div.login-block button.register:hover {

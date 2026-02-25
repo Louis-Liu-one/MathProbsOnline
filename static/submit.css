@@ -1,7 +1,6 @@
 
-div.tpstatus img {
-    width: 80px;
-    height: 80px;
+div.tpstatus i {
+    font-size: 72px;
 }
 
 div#answerdiv {

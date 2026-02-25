@@ -284,7 +284,8 @@ class Judgement(FPElement):
     '''判断语句。'''
 
     def __init__(self, condition, ifbody, elsebody):
-        super().__init__([condition, ifbody, elsebody])
+        super().__init__([condition, ifbody] if elsebody is None else [
+            condition, ifbody, elsebody])
         self.condition = condition
         self.ifbody, self.elsebody = ifbody, elsebody
 

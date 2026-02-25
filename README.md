@@ -5,13 +5,16 @@
 
 ## 构建方法
 
-- 项目使用Markdown-It渲染Markdown，使用Markdown-It-TeXMath插件和KaTeX引擎渲染数学公式。需要添加的文件有：
+- 项目使用Markdown-It渲染Markdown，使用Markdown-It-TeXMath插件和KaTeX引擎渲染数学公式，使用Font Awesome渲染图标。需要添加的文件或目录有：
 1. `static/markdown-it.min.js`
 2. `static/texmath.min.js`
 3. `static/texmath.min.css`
 4. `static/katex.min.js`
 5. `static/katex.min.css`
-这些文件皆可在网上下载。
+6. `static/fontawesome/css/`
+7. `static/fontawesome/js/`
+8. `static/fontawesome/webfonts/`
+这些文件或目录皆可在网上找到。
 
 - 网页所需的Python第三方库有：SymPy、PyParsing、Werkzeug、Flask、Flask-Login、Flask-SQLAlchemy、func_timeout，具体参见`requirements.txt`，可以直接使用`pip`安装，建议使用虚拟环境。命令如下：
 ```bash
@@ -42,7 +45,7 @@ app.run()
 使用时应该注意：
 1. 必须遵守国家相关法律法规，不能进行违法行为；
 2. 上传的题目、题解内容必须依法依规；要以学习为主，不包含无关内容；上传的题目要有编号，建议按照统一的格式；
-3. 上传的任何图片（包括但不限于问题、题解附带图片、用户头像）必须依法依规；建议将大小控制在100KB以下，以保证访问速度；建议使用SVG格式的图像，以提高访问速度；在题目、题解正文中要用Markdown语法插入图像，否则图像不会显示，图像路径在`/images/<题目编号，或题解所属题目编号>/<图像文件名称>`；
+3. 上传的任何图片（包括但不限于问题、题解附带图片、用户头像）必须依法依规；建议将大小控制在100KB以下，以保证访问速度；建议使用SVG格式、JPEG格式的图像，以提高访问速度；在题目、题解正文中要用Markdown语法插入图像，否则图像不会显示，图像路径在`/images/<题目编号，或题解所属题目编号>/<图像文件名称>`；
 4. 在讨论区发布的评论必须依法依规，不发表无关内容干扰讨论；发表见解时，尊重他人，养成文明用语的习惯；不要在讨论区发布答案、题解；
 5. PythonAnyWhere服务器位于美国东海岸，国内响应速度较慢，请耐心等待；
 6. 如遇任何问题或希望提供建议，请联系网站运营者[Liu One](https://github.com/Louis-Liu-one)（微信：wxliuone）。

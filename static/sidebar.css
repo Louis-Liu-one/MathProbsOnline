@@ -44,7 +44,16 @@ div.sidebar-item img {
 }
 
 div.sidebar-item img.avatar {
+    width: 27px;
+    height: 27px;
+    margin-right: 3px;
     border-radius: 50%;
+    color: white;
+}
+
+div.sidebar-item i {
+    font-size: 20px;
+    margin-right: 3px;
 }
 
 div.sidebar-item:hover {

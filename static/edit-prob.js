@@ -6,9 +6,10 @@ function addAnswer(context, answer) {
         if (!context) context = '{}';
         answerlist_js.push([JSON.parse(context), answer]);
         const li = document.createElement('li');
-        li.innerHTML = `${escapeHTML(context)} =&gt; ${escapeHTML(answer)}
-            <img onclick="removeAnswer(${ulanswerlist.children.length})"
-                class="minus" src="${imageMinus}">`;
+        li.innerHTML = `${escapeHTML(context)}
+            <i class="fa-solid fa-arrow-right"></i> ${escapeHTML(answer)}
+            <i onclick="removeAnswer(${ulanswerlist.children.length})"
+                class="minus fa-solid fa-circle-minus"></i>`;
         ulanswerlist.appendChild(li);
     } catch (error) { alert(error); }
 }
