@@ -12,10 +12,7 @@
 <script src="{{ url_for('static', filename='delete-comment.js') }}"></script>
 {% endblock %}
 
-{% block navbar_title %}
-    {% if oflabel %}标签：{{ labelname }}
-    {% else %}题集{% endif %}
-{% endblock %}
+{% block navbar_title %}未读评论{% endblock %}
 
 {% block body %}
 <div class="sidebar">
@@ -27,7 +24,6 @@
     </a>
 </div>
 <div class="mainpart">
-    <h3>未读评论</h3>
     {% set unread_comments = current_user.unread_comments() %}
     {% if unread_comments %}
         <div class="commentlist">

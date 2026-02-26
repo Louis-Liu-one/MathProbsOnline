@@ -10,6 +10,16 @@
 #}
 {% from "includes/users.html" import user_name, user_avatar_img %}
 
+{% macro comment_timestamp(comment) %}
+    {% set timediff = utcfromnow(comment.timestamp) %}
+    {% set tsmoment = moment(comment.timestamp) %}
+    {% if timediff < timedelta(hours=12) %}{{ tsmoment.fromNow(refresh=True) }}
+    {% elif timediff < timedelta(days=6) %}{{ tsmoment.calendar() }}
+    {% elif timediff < timedelta(days=15) %}{{ tsmoment.fromNow(refresh=True) }}
+    {% elif timediff < timedelta(days=365) %}{{ tsmoment.format('M 月 D 日') }}
+    {% else %}{{ tsmoment.format('Y 年 M 月 D 日') }}{% endif %}
+{% endmacro %}
+
 {% macro commentform_main(post_type, post_ident) %}
     <form id="commentform" method="POST" class="mathprobsform"
         action="{{ url_for('post_comment',
@@ -44,7 +54,7 @@
         <textarea>{{ comment.content }}</textarea>
     </div>
     <p class="commentfoot">
-        {{ comment.timestamp.strftime('%Y-%m-%d %H:%M') }}
+        {{ comment_timestamp(comment) }}
         <i id="commentbutton" title="发表评论"
             class="fa-solid fa-comment-dots"></i>
         {% if current_user == comment.user and not with_post %}

@@ -1,4 +1,5 @@
 {% extends "form.html" %}
+{% from "includes/users.html" import select_gender %}
 
 {% block title %}注册 - MathProbs{% endblock %}
 
@@ -13,6 +14,7 @@
             spellcheck="false" placeholder="请输入用户名"
             autocomplete="username" required>
     </span>
+    <span><label for="gender">性别：</label>{{ select_gender() }}</span>
     <span>
         <label for="password">密码：</label>
         <input id="password" name="password" type="password"

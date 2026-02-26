@@ -1,4 +1,5 @@
 {% extends "form.html" %}
+{% from "includes/users.html" import select_gender %}
 
 {% block title %}修改信息 - MathProbs{% endblock %}
 
@@ -12,6 +13,10 @@
         <input id="username" name="username" type="text"
             spellcheck="false" placeholder="请输入用户名"
             autocomplete="username" value="{{ current_user.name }}" required>
+    </span>
+    <span>
+        <label for="gender">修改性别：</label>
+        {{ select_gender(current_user.gender) }}
     </span>
     <span>
         <label for="password">修改密码：</label>

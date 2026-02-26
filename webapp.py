@@ -35,14 +35,17 @@ import os
 import csv
 import json
 import random
+import hashlib
+import datetime
+import functools
 import mimetypes
-from datetime import datetime
 
 from flask import Flask, Response, request, url_for
-from flask import render_template, redirect, send_file
+from flask import render_template, redirect, send_file, make_response
 from flask_login import LoginManager, UserMixin, current_user
 from flask_login import login_required, login_user, logout_user
 from flask_sqlalchemy import SQLAlchemy
+from flask_moment import Moment
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -54,6 +57,7 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite3'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+moment = Moment(app)
 
 
 def csv2list(csvstr):
@@ -67,6 +71,13 @@ def list2csv(ls):
     return csvstr.getvalue().splitlines()[0]
 
 
+_utcnow = functools.partial(datetime.datetime.now, datetime.UTC)
+
+
+def _utcfromnow(timestamp):
+    return _utcnow() - timestamp.astimezone(datetime.UTC)
+
+
 # =========================== 用户数据库与登录系统 ===========================
 
 login_manager = LoginManager(app)
@@ -78,9 +89,12 @@ class User(db.Model, UserMixin):
     columns = 'uid', 'name', 'password'
     uid = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True, nullable=False)
+    gender = db.Column(db.Integer, default=0)
     password = db.Column(db.String(256), nullable=False)
+    introduction = db.Column(db.Text)
     avatar = db.Column(db.LargeBinary)
     avmimetype = db.Column(db.String(64))
+    avlastmodified = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
     submissions = db.relationship(
         'Submission', backref='user', cascade='all, delete')
     uploadedprobs = db.relationship('Prob', backref='source')
@@ -92,10 +106,8 @@ class User(db.Model, UserMixin):
         return False if self.password is None else \
             check_password_hash(self.password, password)
 
-    def avatar_response(self):
-        return Response(self.avatar, mimetype=self.avmimetype)
-
-    def edit_profile(self, name, password, confirmpassword, avatarfile):
+    def edit_profile(
+            self, name, password, confirmpassword, avatarfile, gender):
         user_exists = db.session.query(
             User.query.filter_by(name=name).exists()).scalar()
         if name != self.name and user_exists:
@@ -112,6 +124,9 @@ class User(db.Model, UserMixin):
         if avatardata:
             self.avatar = avatardata
             self.avmimetype = mimetypes.guess_type(avatarfile.filename)[0]
+            self.avlastmodified = _utcnow()
+        if gender != self.gender:
+            self.gender = gender
         db.session.commit()
 
     def get_probscores(self):
@@ -136,7 +151,7 @@ class User(db.Model, UserMixin):
             Comment.timestamp.desc()).all()
 
     def update_cmtlastvisit(self):
-        self.cmtlastvisit = datetime.now()
+        self.cmtlastvisit = _utcnow()
         db.session.commit()
 
     def url(self):
@@ -159,12 +174,13 @@ def load_user(uid):
     return find_user(uid)
 
 
-def register_user(name, password, confirmpassword, avatarfile):
+def register_user(name, gender, password, confirmpassword, avatarfile):
     user_exists = db.session.query(
         User.query.filter_by(name=name).exists()).scalar()
     if name and password and not user_exists and password == confirmpassword:
         user = User(
-            name=name, password=generate_password_hash(password))
+            name=name, gender=gender,
+            password=generate_password_hash(password))
         if avatarfile is not None:
             user.avatar = avatarfile.read()
             user.avmimetype = mimetypes.guess_type(avatarfile.filename)[0]
@@ -441,7 +457,7 @@ class Comment(db.Model):
     cmtid = db.Column(db.Integer, primary_key=True)
     uid = db.Column(db.Integer, db.ForeignKey('users.uid'))
     content = db.Column(db.Text)
-    timestamp = db.Column(db.DateTime, default=datetime.now)
+    timestamp = db.Column(db.DateTime, default=_utcnow)
     replyto_id = db.Column(db.Integer, db.ForeignKey('comments.cmtid'))
     # 帖子类型为'prob'，标识符为题目编号
     # 帖子类型为'solution'，标识符为CSV格式的题目编号与题解编号的组合
@@ -751,12 +767,13 @@ def login():
 def register():
     error = None
     if request.method == 'POST':
-        username = request.form.get('username')
+        name = request.form.get('username')
+        gender = int(request.form.get('gender'))
         password = request.form.get('password')
         confirmpassword = request.form.get('confirmpassword')
         avatar = request.files.get('avatar')
         status, user = register_user(
-            username, password, confirmpassword, avatar)
+            name, gender, password, confirmpassword, avatar)
         if status:
             login_user(user, remember=True)
             return redirect(url_for('welcome'))
@@ -787,8 +804,9 @@ def edit_profile():
         password = request.form.get('password')
         confirmpassword = request.form.get('confirmpassword')
         avatar = request.files.get('avatar')
+        gender = int(request.form.get('gender'))
         error = current_user.edit_profile(
-            username, password, confirmpassword, avatar)
+            username, password, confirmpassword, avatar, gender)
         if error is None:
             return redirect(url_for('welcome'))
     return render_template('edit_profile.html', error=error)
@@ -797,9 +815,31 @@ def edit_profile():
 @app.route('/avatars/<int:uid>')
 def avatarfile(uid):
     user = find_user(uid)
-    if user and user.avatar:
-        return user.avatar_response()
-    return ''
+    if not user or not user.avatar:
+        return '', 404  # 未找到
+    if not user.avlastmodified:
+        user.avlastmodified = datetime.datetime.min
+        db.session.commit()
+    etag = hashlib.md5(user.avatar).hexdigest()
+    if_none_match = request.headers.get('If-None-Match')
+    if_modified_since = request.headers.get('If-Modified-Since')
+    if if_none_match and if_none_match == etag:
+        return '', 304
+    if if_modified_since:
+        try:
+            client_time = datetime.datetime.strptime(
+                if_modified_since, '%a, %d %b %Y %H:%M:%S GMT')
+            if client_time >= user.avlastmodified.replace(microsecond=0):
+                return '', 304
+        except ValueError:
+            return '', 400  # 时间格式错误，无法处理
+    response = make_response(user.avatar)
+    response.headers['Content-Type'] = user.avmimetype or 'image/jpeg'
+    response.headers['ETag'] = etag
+    response.headers['Last-Modified'] = user.avlastmodified.strftime(
+        '%a, %d %b %Y %H:%M:%S GMT')
+    response.headers['Cache-Control'] = 'public, max-age=600'  # 缓存10min
+    return response
 
 
 @app.route('/logout')
@@ -819,6 +859,8 @@ def unregister():
 
 app.jinja_env.add_extension('jinja2.ext.do')
 app.add_template_global(list2csv, 'list2csv')
+app.add_template_global(_utcfromnow, 'utcfromnow')
+app.add_template_global(datetime.timedelta, 'timedelta')
 app.add_template_global(TPStatus, 'TPStatus')
 with app.app_context():
     db.create_all()

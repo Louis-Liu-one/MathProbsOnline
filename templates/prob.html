@@ -34,6 +34,9 @@
 </div>
 <div id="submitdiv" class="submitpart">
     <h3>提交答案</h3>
+    <p style="font-size: 11px; color: gray;">
+        服务器网络不稳定，如遇超时、答案无法解析等问题，尝试多提交几次。
+    </p>
     <form id="answerform" class="mathprobsform" method="POST"
         action="{{ url_for('submit', probno=prob.probno) }}">
         <span><textarea name="answertext" class="submittext"

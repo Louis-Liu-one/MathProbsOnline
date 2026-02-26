@@ -80,7 +80,8 @@ form.mathprobsform label {
     vertical-align: top;
 }
 
-form.mathprobsform input, form.mathprobsform textarea {
+form.mathprobsform input, form.mathprobsform textarea,
+    form.mathprobsform select {
     flex-grow: 1;
     min-width: 0;
     font-family: Andale Mono;
@@ -99,7 +100,8 @@ form.mathprobsform textarea {
 }
 
 form.mathprobsform input:focus,
-    form.mathprobsform textarea:focus {
+    form.mathprobsform textarea:focus,
+    form.mathprobsform select:focus {
     outline-color: lightskyblue;
 }
 

@@ -17,3 +17,43 @@
             src="{{ url_for('avatarfile', uid=user.uid) }}">
     {% else %}<i class="fa-solid fa-user {{ extra_class }}"></i>{% endif %}
 {% endmacro %}
+
+{% macro select_gender(default_gender=None) %}
+    <select id="gender" name="gender">
+        <option value="0" hidden>未选择</option>
+        <option value="1">男性 Mars</option>
+        <option value="2">女性 Venus</option>
+        <option value="3">双性 Mars and Venus</option>
+        <option value="4">无性 Genderless</option>
+        <option value="5">中性 Neuter</option>
+        <option value="6">流动性别 Mercury</option>
+        <option value="7">变性 Transgender</option>
+        <option value="8">非二元性别 Non-binary</option>
+    </select>
+    {% if default_gender %}
+        <script>gender.value = '{{ default_gender }}';</script>
+    {% endif %}
+{% endmacro %}
+
+{% macro user_gender(user) %}
+    {% if user.gender == 1 %}
+        <i class="gender fa-solid fa-mars" style="color: #4B93EB;"></i>
+    {% elif user.gender == 2 %}
+        <i class="gender fa-solid fa-venus" style="color: #D86475;"></i>
+    {% elif user.gender == 3 %}
+        <i class="gender fa-solid fa-mars-and-venus" style="color: #917BB0;"></i>
+    {% elif user.gender == 4 %}
+        <i class="gender fa-solid fa-genderless" style="color: #6E844F;"></i>
+    {% elif user.gender == 5 %}
+        <i class="gender fa-solid fa-neuter" style="color: #917B00;"></i>
+    {% elif user.gender == 6 %}
+        <i class="gender fa-solid fa-mercury" style="background-image: linear-gradient(to bottom, #4B93EB, #D86475);
+            background-clip: text; -webkit-text-fill-color: transparent;"></i>
+    {% elif user.gender == 7 %}
+        <i class="gender fa-solid fa-transgender" style="background-image: linear-gradient(to right, #6E844F, #917BB0);
+            background-clip: text; -webkit-text-fill-color: transparent;"></i>
+    {% elif user.gender == 8 %}
+        <i class="gender fa-solid fa-non-binary" style="background-image: linear-gradient(to right bottom, #4B93EB, #6E844F, #D86475);
+            background-clip: text; -webkit-text-fill-color: transparent;"></i>
+    {% else %}<i class="gender fa-solid"></i>{% endif %}
+{% endmacro %}
